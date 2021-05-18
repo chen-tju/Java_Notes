@@ -1,7 +1,3 @@
-## test-Mac''
-
-
-
 # Java 基础
 
 *记录一部分基础的笔记*
@@ -459,7 +455,11 @@ Java 注解是附加在代码中的一些元信息，用于一些工具在编译
 
 ## 26、异常
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210329160645670.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets/20210329160645670.png)
+
+
+
+**编译器并不会检查 Unchecked Exception**，RuntimeException 是 Exception 的子类，Error 是 Throwable的子类, 而 RuntimeException 和 Error 都是 Unchecked Exception 类。
 
 
 
@@ -469,23 +469,25 @@ Java 注解是附加在代码中的一些元信息，用于一些工具在编译
 	
 	3.Exception，是另外一个非常重要的异常子类。它规定的异常是程序本身可以处理的异常。异常和错误的区别是，异常是可以被处理的，而错误是没法处理的。  
 	
-	4.Checked Exception
-	可检查的异常，这是编码时非常常用的，所有checked exception都是需要在代码中处理的。它们的发生是可以预测的，正常的一种情况，可以合理的处理。比如IOException，或者一些自定义的异常。除了RuntimeException及其子类以外，都是checked exception。
+	4.Checked Exception--受检异常
+	除了RuntimeException及其子类以外，都是checked exception。
+	是编码时非常常用的，发生主要是由于一些特殊情况没有考虑到，所有checked exception都是需要在代码中处理的。
+	它们的发生是可以预测的，是正常的一种情况，可以合理的处理。
+	该异常要么被catch子句捕获要么通过throws子句继续抛出。
+	比如IOException，或者一些自定义的异常。---项目中线程自旋--Thread.sleep(3000);--必须要处理异常，否则不能通过编译
+	比如如果网络连接失败会抛出 IOException，但是我们的程序应该能够提前预料到这些可能发生的异常，并对其进行处理，这样程序在运行过程中才不会崩掉，这也是编译器强制开发者对 Checked Exception 进行处理的原因。
 	
-	5.Unchecked Exception
-	RuntimeException及其子类都是unchecked exception。比如NPE空指针异常，除数为0的算数异常ArithmeticException等等，这种异常是**运行时发生**，无法预先捕捉处理的。Error也是unchecked exception，也是无法预先处理的。
-
-
-```java
-try
-{
-   // 程序代码
-}catch(ExceptionName e1)
-{
-   //Catch 块
-}
-
-```
+	5.Unchecked Exception--非受检异常
+	RuntimeException及其子类都是unchecked exception。--没有要求客户端调用时必须处理这种类型的异常。
+	比如NPE空指针异常，除数为0的算数异常ArithmeticException等等，这种异常是**运行时发生**，无法预先捕捉处理的。
+	Error也是unchecked exception，也是无法预先处理的。
+	
+	
+	1、Unchecked Exception 的发生有一些是由于开发者代码逻辑错误造成的，比如：NullPointerException 这种异常可以通过检查一个引用是否为 null 来进行避免。
+	
+	2、有一些 Unchecked Exception 出现并不是因为开发者程序的问题，这些 Exception 是 java.lang.Error 的子类。
+	就像 OutOfMemoryError 可能发生在任意一个示例对象创建时，但我们不可能在每个对象实例创建时都使用 catch 块去捕获异常。因此，我们也就不可能预料这些异常的发生，编译器在编译时也无法检测到这些异常。
+	
 
 	1. 通过try...catch语句块来处理：
 	Catch 语句包含要捕获异常类型的声明。当保护代码块中发生一个异常时，try 后面的 catch 块就会被检查。
@@ -495,6 +497,54 @@ try
 	具体的，如果一个方法没有捕获到一个检查性异常，那么该方法必须使用 throws 关键字来声明。
 	throws 关键字放在方法签名的尾部。
 	也可以使用 throw 关键字抛出一个异常，无论它是新实例化的还是刚捕获到的。 
+
+```
+try
+{
+   // 程序代码
+}catch(ExceptionName e1)
+{
+   //Catch 块
+}
+调用该方法时，读取文件时若发生异常，代码会进入 catch 代码块，之后进入 finally 代码块；若读取文件时未发生异常，则会跳过 catch 代码块直接进入 finally 代码块。所以无论代码中是否发生异常，fianlly 中的代码都会执行。
+
+注意：--finally中的return会覆盖前面的return
+	不要在finally块中使用return。
+	--try块中的return语句执行成功后，并不马上返回，而是继续执行finally块中的语句，如果finally块中存在return语句，则在此直接返回，丢弃掉try块中的返回点。
+```
+
+
+
+#### 异常常见面试题：
+
+```
+1、Error 和 Exception 区别是什么？
+Error 类型的错误通常为虚拟机相关错误，如系统崩溃，内存不足，堆栈溢出等，编译器不会对这类错误进行检测，JAVA 应用程序也不应对这类错误进行捕获，一旦这类错误发生，通常应用程序会被终止，仅靠应用程序本身无法恢复；
+Exception 类的错误是可以在应用程序中进行捕获并处理的，通常遇到这种错误，应对其进行处理，使应用程序可以继续正常运行。
+
+2、运行时异常Runtime和一般异常区别是什么？
+
+
+3、NoClassDefFoundError 和 ClassNotFoundException 区别是什么？
+NoClassDefFoundError 是一个 Error 类型的异常，是由 JVM 引起的，不应该尝试捕获这个异常。引起该异常的原因是 JVM 或 ClassLoader 尝试加载某类时在内存中找不到该类的定义，该动作发生在运行期间，即编译时该类存在，但是在运行时却找不到了，可能是变异后被删除了等原因导致；
+ClassNotFoundException 是一个受查异常，需要显式地使用 try-catch 对其进行捕获和处理，或在方法签名中用 throws 关键字进行声明。当使用 Class.forName, ClassLoader.loadClass 或 ClassLoader.findSystemClass 动态加载类到内存的时候，通过传入的类路径参数没有找到该类，就会抛出该异常；另一种抛出该异常的可能原因是某个类已经由一个类加载器加载至内存中，另一个加载器又尝试去加载它。
+
+4、JVM 是如何处理异常的？
+在一个方法中如果发生异常，这个方法会创建一个异常对象，并转交给 JVM，该异常对象包含异常名称，异常描述以及异常发生时应用程序的状态。创建异常对象并转交给 JVM 的过程称为抛出异常。可能有一系列的方法调用，最终才进入抛出异常的方法，这一系列方法调用的有序列表叫做调用栈。
+JVM 会顺着调用栈去查找看是否有可以处理异常的代码，如果有，则调用异常处理代码。当 JVM 发现可以处理异常的代码时，会把发生的异常传递给它。如果 JVM 没有找到可以处理该异常的代码块，JVM 就会将该异常转交给默认的异常处理器（默认处理器为 JVM 的一部分），默认异常处理器打印出异常信息并终止应用程序。
+
+5、throw 和 throws 的区别是什么？
+throw 关键字用来抛出方法或代码块中的异常，受查异常和非受查异常都可以被抛出。
+throws 关键字用在方法签名处，用来标识该方法可能抛出的异常列表。一个方法用 throws 标识了可能抛出的异常列表，调用该方法的方法中必须包含可处理异常的代码，否则也要在方法签名中用 throws 关键字声明相应的异常。
+
+6、常见的 RuntimeException 有哪些？
+	1、ClassCastException(类转换异常)
+	2、IndexOutOfBoundsException(数组越界)
+	3、NullPointerException(空指针)
+	4、ArrayStoreException(数据存储异常，操作数组时类型不一致)
+	5、还有IO操作的BufferOverflowException异常
+```
+
 
 
 ## 27、泛型
