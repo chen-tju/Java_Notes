@@ -8239,6 +8239,20 @@ ACID特性不是一种平级关系：
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20210317145756847.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
 
+
+
+https://my.oschina.net/u/4407031/blog/4329009
+
+https://blog.csdn.net/qq_35590091/article/details/107734005
+
+https://www.cnblogs.com/twoheads/p/10703023.html
+
+# 根据这篇博客修改MVCC部分知识点：
+
+
+
+
+
 #### 4、多版本并发控制MVCC
 
 多版本并发控制（Multi-Version Concurrency Control, **MVCC**）是 MySQL 的 **InnoDB 存储引擎**实现隔离级别的一种具体方式，用于实现**读已提交**和**可重复读**两种隔离级别。
@@ -8350,6 +8364,14 @@ MVCC 维护了一个 ReadView 结构，主要包含了**当前系统未提交的
 	SELECT * FROM table WHERE ? lock in share mode;
 	SELECT * FROM table WHERE ? for update;
 ```
+
+
+
+
+
+- **InnoDB通过MVCC部分地解决了幻读问题：a. 针对select不会有幻读；b. 针对select for update会有幻读。**
+
+  可见，在InnoDB可重复读的隔离级别中，并未完全解决“幻读”问题，而是解决了读数据情况下的“幻读”问题，而对于修改的操作依然存在“幻读”问题。
 
 
 
