@@ -1,6 +1,6 @@
 # 项目的一些问题：
 
-![image-20210523192658070](/Users/chen/Library/Application Support/typora-user-images/image-20210523192658070.png)
+![image-20210523192658070](/Users/chen/IdeaProjects/Java_Notes/Java工程.assets/image-20210523192658070.png)
 
 
 
@@ -8,9 +8,128 @@
 
 <img src="Java笔记.assets/image-20210414112406148.png" alt="image-20210414112406148"  />
 
+
+
+
+
 ## 0、分布式问题：
 
-### 1、序列化与反序列化：
+小的项目--gmall-user项目中所有的controller、service接口、service实现都在一个工程，通过**Spring的ioc**就可以实现互相调用。
+
+随着架构不断增大，服务节点也越来越多，服务之间的调用和依赖关系也越来越复杂，
+**需要有一个统一的中心来调度、路由、管理所有的服务**，基于这个中心构建的这个星型架构就是现在目前最主流的**SOA分布式架构**。
+
+**整体以maven为基础，对项目进行分层架构。**
+
+
+
+#### 项目中RPC体现在哪？
+
+Dubbo框架下，@Reference关键字实现分布式的远程服务对象的注入。
+
+
+
+dubbo的服务订阅有两种方式，第一种是通过xml文件的标签`<dubbo:reference />`，第二种是通过注解`@Reference`。
+
+
+
+@Reference 的行为跟 @Autowired 类似 均实现了自动注入的过程 。
+
+dubbo也是采用了和@Autowired注入一样的原理，通过继承`InstantiationAwareBeanPostProcessor` 重写postProcessPropertyValues 方法来达到解析@Reference并实现依赖注入。
+
+
+
+消费者每引用的一种服务，都会创建一个ReferenceBean， 如果多个地方使用@Reference引用同一个服务，需要看他们的的缓存key是否一样，如果都是一样的，那么就只会创建一个ReferenceBean，如果有些配置不一样，比如版本号不一致，则会创建创建不同的`ReferenceBean`对象，这也是他版本号能够起到的作用把。至此，`@Reference`注解已经解析完毕，并且服务引用的对象也已经创建了。
+
+
+
+
+
+### **0、什么是SOA？**
+
+SOA 是 Service-Oriented Architecture 的英文缩写，就是**面向服务的架构**。这里的服务可以理解为 **service 层业务服务**。
+
+**将系统拆分为不同的服务单元，通过网络协议服务单元之间进行通信。**
+
+服务单元完成一个特定功能(如：验证、支付、登录等等)，通过服务单元之间的集成组成完整的应用程序。
+
+SOA 架构中由两个重要的角色: **服务提供者（Provider）和服务使用者（Consumer）**
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20201214212008240.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+
+**SOA的优点：**
+
+```
+1、更易维护:业务服务提供者和业务服务使用者的松散耦合关系。当需求发生变化的时候，不需要修改提供业务服务的接口，只需要调整业务服务流程或者修改操作即可，整个应用系统也更容易被维护。
+
+2、更高的可用性:该特点是在于服务提供者和服务使用者的松散耦合关系上得以发挥与体现。使用者无须了解提供者的具休实现细节。
+
+3、更好的伸缩性:依靠业务服务设计、开发和部署等所采用的架构模型实现伸缩性。使得服务提供者可以互相彼此独立地进行调整，以满足新的服务需求。
+```
+
+**SOA缺点：**
+
+```
+减低了系统的性能
+
+系统之间交互需要使用远程通信，接口开发增加工作量
+```
+
+
+
+```
+1、ZooKeeper是一个分布式的，开放源码的分布式应用程序协调服务，是Google的Chubby一个开源的实现，是Hadoop和Hbase的重要组件。
+	它是一个为分布式应用提供一致性服务的软件，提供的功能包括：配置维护、名字服务、分布式同步、组服务等。
+2、Dubbo是Alibaba开源的分布式服务框架，它最大的特点是按照分层的方式来架构，使用这种方式可以使各个层之间解耦合（或者最大限度地松耦合）。
+从服务模型的角度来看，Dubbo采用的是一种非常简单的模型，要么是提供方提供服务，要么是消费方消费服务，所以基于这一点可以抽象出服务提供方（Provider）和服务消费方（Consumer）两个角色。关于注册中心、协议支持、服务监控等内容。
+```
+
+
+
+### 1、dubbo
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20201215171245702.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+
+Dubbo只支持Java语言。
+
+Dubbo 的架构主要包含四个角色，其中 Consumer 是服务消费者，Provider 是服务提供者，Registry 是注册中心，Monitor 是监控系统。具体的交互流程是 Consumer 一端通过注册中心获取到 Provider 节点后，通过 Dubbo 的客户端 SDK 与 Provider 建立连接，并发起调用。Provider 一端通过 Dubbo 的服务端 SDK 接收到 Consumer 的请求，处理后再把结果返回给 Consumer。
+
+
+
+
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20210520195512992.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+
+
+
+
+
+**调用关系：**
+
+0、服务容器负责启动，加载，运行服务提供者。
+1、服务提供者在启动时，向注册中心注册自己提供的服务。
+2、服务消费者在启动时，向注册中心订阅自己所需的服务。
+3、注册中心返回服务提供者地址列表给消费者，如果有变更，注册中心将基于长连接推送变更数据给消费者。
+4、服务消费者，从提供者地址列表中，基于软负载均衡算法，选一台提供者进行调用，如果调用失败，再选另一台调用。
+5、服务消费者和提供者，在内存中累计调用次数和调用时间，定时每分钟发送一次统计数据到监控中心。
+
+
+
+**Dubbo对分布式事务的处理：**
+分布式事务暂不支持。用户可以自己根据实际情况来实现分布式事务，比如：
+1）结合RocketMQ消息中间件实现的可靠消息最终一致性
+2）TCC补偿性事务解决方案
+3）最大努力通知型方案
+
+
+
+- [一些面试题](https://www.cnblogs.com/hongdada/p/8572513.html)
+
+
+
+
+
+### 2、序列化与反序列化：
 
 [我的博客：详解序列化与反序列化](https://blog.csdn.net/wang_chaochen/article/details/117134199)
 
@@ -38,7 +157,7 @@
 
 
 
-### 2、RPC
+### 3、RPC
 
 [我的博客：RPC](https://blog.csdn.net/wang_chaochen/article/details/117066207)
 
@@ -110,36 +229,6 @@ RPC采用客户机/服务器模式。请求程序就是一个客户机，而服�
 B机器进行本地调用（通过代理Proxy）之后得到了返回值，此时还需要再把返回值发送回A机器，同样也需要经过序列化操作，然后再经过网络传输将二进制数据发送回A机器，而当A机器接收到这些返回值之后，则再次进行反序列化操作，恢复为内存中的表达方式，最后再交给A机器上的应用进行相关处理（一般是业务逻辑处理操作）。
 
 
-
-### 3、dubbo
-
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210520195512992.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
-Dubbo只支持Java语言。
-
-Dubbo 的架构主要包含四个角色，其中 Consumer 是服务消费者，Provider 是服务提供者，Registry 是注册中心，Monitor 是监控系统。具体的交互流程是 Consumer 一端通过注册中心获取到 Provider 节点后，通过 Dubbo 的客户端 SDK 与 Provider 建立连接，并发起调用。Provider 一端通过 Dubbo 的服务端 SDK 接收到 Consumer 的请求，处理后再把结果返回给 Consumer。
-
-
-
-**调用关系：**
-
-服务容器负责启动，加载，运行服务提供者。
-服务提供者在启动时，向注册中心注册自己提供的服务。
-服务消费者在启动时，向注册中心订阅自己所需的服务。
-注册中心返回服务提供者地址列表给消费者，如果有变更，注册中心将基于长连接推送变更数据给消费者。
-服务消费者，从提供者地址列表中，基于软负载均衡算法，选一台提供者进行调用，如果调用失败，再选另一台调用。
-服务消费者和提供者，在内存中累计调用次数和调用时间，定时每分钟发送一次统计数据到监控中心。
-
-
-
-**Dubbo对分布式事务的处理：**
-分布式事务暂不支持。用户可以自己根据实际情况来实现分布式事务，比如：
-1）结合RocketMQ消息中间件实现的可靠消息最终一致性
-2）TCC补偿性事务解决方案
-3）最大努力通知型方案
-
-
-
-- [一些面试题](https://www.cnblogs.com/hongdada/p/8572513.html)
 
 
 
@@ -385,7 +474,14 @@ B该用户没有登录，并且结算请求时没有登录也可以访问，放�
 
 ## 补充问题：
 
+#### 前后端的跨域问题：
 
+```
+1、前端127.0.0.1:8888、后端127.0.0.1:8082
+2、前端和后端因为来自不同的网域，所以在http的安全协议策略下，不信任
+
+解决方案: 在springmvc的控制层也就是项目gmall-manage-web的 Controller类 中加入 @CrossOrigin 跨域访问的注解.
+```
 
 #### **1、后台管理，发布商品sku时，使用消息队列同步缓存**
 
@@ -434,6 +530,94 @@ B该用户没有登录，并且结算请求时没有登录也可以访问，放�
 ```
 
 
+
+
+
+## 架构风格：
+
+[技术架构演变、RPC](https://juejin.cn/post/6862646095513419783)
+
+![image-20210524105940227](/Users/chen/IdeaProjects/Java_Notes/Java工程.assets/image-20210524105940227.png)
+
+
+
+- 基于 SOA 的架构思想将重复公用的功能抽取为组件，以服务的形式给各系统提供服务。
+- 各项目（系统）与服务之间采用 WebService、RPC 等方式进行通信。
+- 使用 ESB 企业服务总线作为项目与服务之间通信的桥梁。
+
+
+
+![image-20210524110500948](/Users/chen/IdeaProjects/Java_Notes/Java工程.assets/image-20210524110500948.png)
+
+- 将系统服务层完全独立出来，并将服务层抽取为一个一个的微服务。
+- 微服务中每一个服务都对应唯一的业务能力，遵循单一原则。
+- 微服务之间采用 RESTful 等轻量协议传输。
+
+
+
+## 通信方式：
+
+### TCP/UDP
+
+　　都是传输协议，主要区别是 TCP 协议连接需要 3 次握手，断开需要四次挥手，是通过流来传输的，就是确定连接后，一直发送信息，传完后断开。UDP 不需要进行连接，直接把信息封装成多个报文，直接发送。所以 UDP 的速度更快，但是不保证数据的完整性。
+
+> 一句话总结：最古老且最有效，永不过时，学习成本高。所有通信方式归根结底都是 TCP/UDP。
+
+
+
+### WebService
+
+　　WebService（SOA，SOAP，WSDL，UDDI，XML）技术， 能使得运行在不同机器上的不同应用无须借助附加的、专门的第三方软件或硬件， 就可相互交换数据或集成。依据 WebService 规范实施的应用之间， 无论它们所使用的语言、 平台或内部协议是什么， 都可以相互交换数据。
+
+　　WebService 就是一种跨编程语言和跨操作系统平台的远程调用技术。WebService 交互的过程就是遵循 SOAP 协议通过 XML 封装数据，然后由 Http 协议来传输数据。
+
+> 一句话总结：基于 HTTP + XML 的标准化 Web API。
+
+　　
+
+### RESTful
+
+　　Representational State Transfer，表现层状态转移。互联网通信协议 HTTP 协议，是一个无状态协议。这意味着，所有的状态都保存在服务器端。因此，如果客户端想要操作服务器，必须通过某种手段，让服务器端发生"状态转化"（State Transfer）。而这种转化是建立在表现层之上的，所以就是"表现层状态转移"。
+
+　　客户端用到的手段，只能是 HTTP 协议。具体来说，就是 HTTP 协议里面，四个表示操作方式的动词：GET、POST、PUT、DELETE。它们分别对应四种基本操作：GET 用来获取资源，POST 用来新建资源（也可以用于更新资源），PUT 用来更新资源，DELETE 用来删除资源。
+
+- 无状态协议 HTTP，具备先天优势，扩展能力很强。例如需要安全加密时，有现成的成熟方案 HTTPS 可用。
+- JSON 报文序列化，轻量简单，人与机器均可读，学习成本低，搜索引擎友好。
+- 语言无关，各大热门语言都提供成熟的 Restful API 框架。
+
+> 一句话总结：基于 HTTP + JSON 的标准化 Web API。
+
+　　
+
+### RMI
+
+　　Remote Method Invocation，远程方法调用。Java 中实现的分布式通信协议，它大大增强了 Java 开发分布式应用的能力。通过 RMI 技术，某一个本地的 JVM 可以调用存在于另外一个 JVM 中的对象方法，就好像它仅仅是在调用本地 JVM 中某个对象方法一样。
+
+> 一句话总结：基于 Java 语言的分布式通信协议。
+
+　　
+
+### JMS
+
+　　Java Message Service，Java 消息服务应用程序接口，是一个 Java 平台中关于面向消息中间件的 API，用于在两个应用程序之间，或分布式系统中发送消息，进行异步通信。绝大多数 MQ 都对 JMS 提供支持，如 RabbitMQ、ActiveMQ、Kafka、RocketMQ 以及 Redis 等。
+
+> 一句话总结：JavaEE 消息框架标准。
+
+　　
+
+### RPC
+
+　　Remont Proceduce Call，远程过程调用。它是一种通过网络从远程计算机程序上请求服务，而不需要了解底层网络技术的思想。RPC 只是一个概念，它不是一个协议也不是一个框架。
+
+　　RPC 的具体实现可以使用 RMI 或 RESTful 等，但一般不用，因为 RMI 不能跨语言，RESTful 效率太低。
+
+　　RPC 多用于服务器集群内部通信，因此常使用更加高效、短小精悍的传输模式以提高效率。RPC 框架有很多：Apache Thrift、Apache Dubbo、Google Grpc 等。
+
+> 一句话总结：解决分布式系统中，服务之间的调用问题。远程调用时，要能够像本地调用一样方便，让调用者感知不到远程调用的逻辑。
+
+　　
+
+## 
 
 # --------------------------------------------------------------------------———————————————————————————————  
 
