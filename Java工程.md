@@ -1,6 +1,6 @@
 # 项目的一些问题：
 
-![image-20210523192658070](/Users/chen/IdeaProjects/Java_Notes/Java工程.assets/image-20210523192658070.png)
+![image-20210523192658070](./Java工程.assets/image-20210523192658070.png)
 
 
 
@@ -55,7 +55,7 @@ SOA 是 Service-Oriented Architecture 的英文缩写，就是**面向服务的�
 
 SOA 架构中由两个重要的角色: **服务提供者（Provider）和服务使用者（Consumer）**
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20201214212008240.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java工程.assets/20201214212008240.png)
 
 **SOA的优点：**
 
@@ -88,7 +88,7 @@ SOA 架构中由两个重要的角色: **服务提供者（Provider）和服务�
 
 ### 1、dubbo
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20201215171245702.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java工程.assets/20201215171245702.png)
 
 Dubbo只支持Java语言。
 
@@ -98,7 +98,7 @@ Dubbo 的架构主要包含四个角色，其中 Consumer 是服务消费者，P
 
 
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210520195512992.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java工程.assets/20210520195512992.png)
 
 
 
@@ -190,7 +190,7 @@ RPC协议假定某些传输协议的存在，如TCP或UDP，为通信程序之�
 RPC允许一台计算机调用另一台计算机上的程序得到结果，而代码中不需要做额外的编程，就像在本地调用一样。
 RPC采用客户机/服务器模式。请求程序就是一个客户机，而服务提供程序就是一个服务器。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210520164725465.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java工程.assets/20210520164725465.png)
 
 **在RPC框架中主要有三个角色：**
 
@@ -242,7 +242,7 @@ B机器进行本地调用（通过代理Proxy）之后得到了返回值，此�
 4、服务端（Server）:服务的真正提供者
 
 同步调用的一次完整的RPC调用流程--如图：
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210520163914936.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java工程.assets/20210520163914936.png)
 
 ```
 1、服务消费者（client客户端）通过本地调用的方式调用服务 
@@ -537,7 +537,7 @@ B该用户没有登录，并且结算请求时没有登录也可以访问，放�
 
 [技术架构演变、RPC](https://juejin.cn/post/6862646095513419783)
 
-![image-20210524105940227](/Users/chen/IdeaProjects/Java_Notes/Java工程.assets/image-20210524105940227.png)
+![image-20210524105940227](./Java工程.assets/image-20210524105940227.png)
 
 
 
@@ -547,7 +547,7 @@ B该用户没有登录，并且结算请求时没有登录也可以访问，放�
 
 
 
-![image-20210524110500948](/Users/chen/IdeaProjects/Java_Notes/Java工程.assets/image-20210524110500948.png)
+![image-20210524110500948](./Java工程.assets/image-20210524110500948.png)
 
 - 将系统服务层完全独立出来，并将服务层抽取为一个一个的微服务。
 - 微服务中每一个服务都对应唯一的业务能力，遵循单一原则。
