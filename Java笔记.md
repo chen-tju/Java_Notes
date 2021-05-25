@@ -523,8 +523,8 @@ Java 注解是附加在代码中的一些元信息，用于一些工具在编译
 
 
 ​	
-	1、Unchecked Exception 的发生有一些是由于开发者代码逻辑错误造成的，比如：NullPointerException 这种异常可以通过检查一个引用是否为 null 来进行避免。
-	
+​	1、Unchecked Exception 的发生有一些是由于开发者代码逻辑错误造成的，比如：NullPointerException 这种异常可以通过检查一个引用是否为 null 来进行避免。
+​	
 	2、有一些 Unchecked Exception 出现并不是因为开发者程序的问题，这些 Exception 是 java.lang.Error 的子类。
 	就像 OutOfMemoryError 可能发生在任意一个示例对象创建时，但我们不可能在每个对象实例创建时都使用 catch 块去捕获异常。因此，我们也就不可能预料这些异常的发生，编译器在编译时也无法检测到这些异常。
 
@@ -8310,7 +8310,7 @@ https://www.cnblogs.com/twoheads/p/10703023.html
 **读未提交**隔离级别总是读取最新的数据行，要求很低，**无需使用MVCC**。
 **串行化**隔离级别需要对所有读取的行都加锁，**单纯使用MVCC无法实现**。
 
-![image-20210524161928747](/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/image-20210524161928747.png)
+![image-20210524161928747](./Java笔记.assets/image-20210524161928747.png)
 
 
 
@@ -8344,7 +8344,7 @@ MVCC 在每行记录后面都保存着两个隐藏的列，用来存储两个版
 - 创建版本号：指示创建一个数据行的快照时的系统版本号；
 - 删除版本号：如果该快照的删除版本号大于当前事务版本号表示该快照有效，否则表示该快照已经被删除了。
 
-<img src="/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/image-20210524152139153.png" alt="image-20210524152139153" style="zoom:50%;" />
+<img src="./Java笔记.assets/image-20210524152139153.png" alt="image-20210524152139153" style="zoom:50%;" />
 
 **隐藏列：**
 
@@ -8356,7 +8356,7 @@ InnoDB会在每行数据后增加隐藏字段：
 3. DB_ROLL_PTR（回滚指针）：指向undo log记录，即指向这条记录的上一个版本；通过回滚指针连接同一条数据的多个版本，形成一个版本链。
 ```
 
-![image-20210524153025480](/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/image-20210524153025480.png)
+![image-20210524153025480](./Java笔记.assets/image-20210524153025480.png)
 
 InnoDB **每一行数据都有一个隐藏的回滚指针**，用于**指向该行修改前的最后一个历史版本**，这个历史版本**存放在 undo log** 中。如果要执行**更新操作**，会**将原记录放入 undo log 中**，并**通过隐藏的回滚指针指向 undo log 中的原记录**。其它事务此时需要查询时，就是查询 undo log 中这行数据的最后一个历史版本。
 
