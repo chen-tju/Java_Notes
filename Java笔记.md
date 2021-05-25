@@ -525,8 +525,8 @@ Java 注解是附加在代码中的一些元信息，用于一些工具在编译
 ​	
 ​	1、Unchecked Exception 的发生有一些是由于开发者代码逻辑错误造成的，比如：NullPointerException 这种异常可以通过检查一个引用是否为 null 来进行避免。
 ​	
-	2、有一些 Unchecked Exception 出现并不是因为开发者程序的问题，这些 Exception 是 java.lang.Error 的子类。
-	就像 OutOfMemoryError 可能发生在任意一个示例对象创建时，但我们不可能在每个对象实例创建时都使用 catch 块去捕获异常。因此，我们也就不可能预料这些异常的发生，编译器在编译时也无法检测到这些异常。
+​	2、有一些 Unchecked Exception 出现并不是因为开发者程序的问题，这些 Exception 是 java.lang.Error 的子类。
+​	就像 OutOfMemoryError 可能发生在任意一个示例对象创建时，但我们不可能在每个对象实例创建时都使用 catch 块去捕获异常。因此，我们也就不可能预料这些异常的发生，编译器在编译时也无法检测到这些异常。
 
 
 	1. 通过try...catch语句块来处理：
@@ -8291,17 +8291,13 @@ ACID特性不是一种平级关系：
 
 
 
-https://my.oschina.net/u/4407031/blog/4329009
+ 几篇参考博客：
 
-https://blog.csdn.net/qq_35590091/article/details/107734005
+[InnoDB基于MVCC和next-key锁解决幻读问题](https://my.oschina.net/u/4407031/blog/4329009)
 
-https://www.cnblogs.com/twoheads/p/10703023.html
+[Innodb MVCC实现原理](https://zhuanlan.zhihu.com/p/52977862)
 
-# 
-
-
-
-
+[浅谈数据库并发控制 - 锁和 MVCC](https://draveness.me/database-concurrency-control/)
 
 #### 4、多版本并发控制MVCC
 
@@ -8428,6 +8424,14 @@ DELETE 可以看成是一个特殊的 UPDATE，还会额外将 DEL 字段设置�
 **4、ReadView**
 
 MVCC 维护了一个 ReadView 结构，主要包含了**当前系统未提交的事务列表** TRX_IDs {TRX_ID_1, TRX_ID_2, ...}，还有该列表的**最小值 TRX_ID_MIN** 和 **TRX_ID_MAX**。
+
+ReadView中包含4个比较重要的内容：
+
+- `m_ids`：表示在生成`ReadView`时当前系统中活跃的读写事务的`事务id`列表。
+- `min_trx_id`：表示在生成`ReadView`时当前系统中活跃的读写事务中最小的`事务id`，也就是`m_ids`中的最小值。
+- `max_trx_id`：表示生成`ReadView`时系统中应该分配给下一个事务的`id`值。
+- `creator_trx_id`：表示生成该`ReadView`的事务的`事务id`。
+
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20210317201309303.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
 在进行 **SELECT 操作**时，根据数据行快照的 TRX_ID 与 **未提交事务列表**的TRX_ID_MIN 和 TRX_ID_MAX 之间的关系，从而判断数据行快照是否可以使用：
 
@@ -8471,6 +8475,28 @@ MVCC 维护了一个 ReadView 结构，主要包含了**当前系统未提交的
 	SELECT * FROM table WHERE ? for update;
 ```
 
+```
+幻读现象的原因
+快照读
+当执行select操作是innodb默认会执行快照读，会记录下这次select后的结果，之后select 的时候就会返回这次快照的数据，即使其他事务提交了不会影响当前select的数据，这就实现了可重复读了。快照的生成当在第一次执行select的时候，也就是说假设当A开启了事务，然后没有执行任何操作，这时候B insert了一条数据然后commit,这时候A执行 select，那么返回的数据中就会有B添加的那条数据。之后无论再有其他事务commit都没有关系，因为快照已经生成了，后面的select都是根据快照来的。
+
+当前读
+对于会对数据修改的操作(update、insert、delete)都是采用当前读的模式。在执行这几个操作时会读取最新的版本号记录，写操作后把版本号改为了当前事务的版本号，所以即使是别的事务提交的数据也可以查询到。假设要update一条记录，但是在另一个事务中已经delete掉这条数据并且commit了，如果update就会产生冲突，所以在update的时候需要知道最新的数据。也正是因为这样所以才导致幻读。
+
+在快照读情况下，MySQL通过mvcc来避免幻读。
+在当前读情况下，MySQL通过next-key来避免幻读
+如何解决当前读导致的幻读问题
+使用可串行化的隔离级别
+SERIALIZABLE会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁竞争的问题。实际应用中也很少用到这个隔离级别，只有在非常需要确保数据的一致性而且可以接受没有并发的情况下，才考虑采用该级别
+
+使用next-key锁，即更新时基于非唯一索引更新数据
+InnoDB中next-key基于行锁和间隙锁实现，而间隙锁依赖于非唯一索引，InnoDB中索引是有序的，间隙锁时基于索引锁住其他事务需要插入的索引行，当使用非唯一索引进行更新时InnoDB会加上间隙锁，阻塞其他事务需要查询的索引行，避免幻读
+
+新增非唯一索引
+
+ALTER TABLE tb_user ADD INDEX idx_batch(batch);
+```
+
 
 
 
@@ -8494,6 +8520,20 @@ MVCC 维护了一个 ReadView 结构，主要包含了**当前系统未提交的
 可见，在InnoDB可重复读的隔离级别中，并未完全解决“幻读”问题，而是解决了读数据情况下的“幻读”问题，而对于修改的操作依然存在“幻读”问题。
 
 
+
+间隙锁的目的是为了防止幻读，其主要通过两个方面实现这个目的：
+（1）防止间隙内有新数据被插入
+（2）防止已存在的数据，更新成间隙内的数据（例如防止numer=3的记录通过update变成number=5）
+
+**间隙锁在InnoDB的唯一作用就是防止其它事务的插入操作，以此来达到防止幻读的发生，所以间隙锁不分什么共享锁与排它锁。 默认情况下，InnoDB工作在Repeatable Read隔离级别下，并且以\**\*Next-Key Lock\**\*的方式对数据行进行加锁，这样可以有效防止\**\*幻读\**\*的发生。\**\*Next-Key Lock\**\*是行锁与间隙锁的组合，当对数据进行条件，范围检索时，对其范围内也许并存在的值进行加锁！当查询的索引含有唯一属性（唯一索引，主键索引）时，Innodb存储引擎会对next-key lock进行优化，将其降为record lock,即仅锁住索引本身，而不是范围！若是普通辅助索引，则会使用传统的next-key lock进行范围锁定！**
+
+**要禁止间隙锁的话，可以把隔离级别降为Read Committed，或者开启参数\*innodb_locks_unsafe_for_binlog\*。**
+
+ 
+
+**对于快照读来说，幻读的解决是依赖mvcc解决。而对于当前读则依赖于gap-lock解决。**
+
+ 
 
 
 
