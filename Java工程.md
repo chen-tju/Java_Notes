@@ -758,7 +758,7 @@ key的个数过多会带来更多的内存空间占用：
 
 
 
-## 设计模式分类：
+### 设计模式分类：
 
 ```
 1、创建型模式：
@@ -791,7 +791,7 @@ key的个数过多会带来更多的内存空间占用：
 
 
 
-## 设计模式的6大原则:
+### 设计模式的6大原则:
 
 ```
 1、开闭原则（Open Close Principle）
@@ -829,14 +829,16 @@ key的个数过多会带来更多的内存空间占用：
 
 
 
-## 1、单例模式
+## 一、创建型模式：
 
-确保一个类只有一个实例，并提供该实例的全局访问点。
+### 1、单例模式
+
+**确保一个类只有一个实例，并提供该实例的全局访问点。**
 
 使用一个私有构造函数、一个私有静态变量及一个公有静态函数实现。
 私有构造函数保证了不能通过构造函数创建对象实例，只能通过公有静态函数返回唯一的私有静态变量。
 
-### 1、懒汉式(线程不安全)
+#### 1、懒汉式(线程不安全)
 
 ```java
 public class Singleton {
@@ -858,7 +860,7 @@ public class Singleton {
 
 多线程下不安全，如果多个线程能同时进入判断语句，且此时uniqueInstance为null，这样的话就会有多个线程执行实例化语句，导致**实例化多次uniqueInstance**。
 
-### 2、饿汉式(线程安全)
+#### 2、饿汉式(线程安全)
 
 ```java
 public class Singleton {
@@ -877,7 +879,7 @@ public class Singleton {
 
 直接实例化的方式丢失了延迟实例化带来的节约资源的好处。
 
-### 3、懒汉式(线程安全)
+#### 3、懒汉式(线程安全)
 
 ```java
 public class Singleton {
@@ -899,7 +901,7 @@ public class Singleton {
 
 但是一个线程进入该方法后，其它试图进入该方法的线程必须等待，存在过长阻塞时间。
 
-### 4、双重校验锁实现DCL(线程安全)
+#### 4、双重校验锁实现DCL(线程安全)
 
 ```java
 public class Singleton {
@@ -942,7 +944,7 @@ JVM具有指令重排的特性，执行顺序可能发生变化。
 	--2还没执行先执行了3，另一个线程执行时对象非空，出现**DCL失效问题**。
 volatile关键字禁止指令重排，因此可以在多线程环境下正常运行。
 
-### 5、静态内部类实现
+#### 5、静态内部类实现
 
 ```java
 public class Singleton {
@@ -964,7 +966,7 @@ public class Singleton {
 
 延迟初始化+线程安全，但是存在传参的问题，因为静态内部类创建单例，外部无法传递参数进去。
 
-### 6、枚举实现
+#### 6、枚举实现
 
 ```java
 public enum Singleton {
@@ -1007,7 +1009,7 @@ public enum Singleton {
 可以防止反射攻击。枚举是由JVM保证只会实例化一次。
 该实现在多次序列化和序列化之后，不会得到多个实例。
 
-## 2、工厂模式
+### 2、工厂模式
 
 **优点：**
 
@@ -1019,7 +1021,7 @@ public enum Singleton {
 3、降低耦合度。产品类的实例化通常来说是很复杂的，它需要依赖很多的类，而这些类对于调用者来说根本无需知道，如果使用了工厂方法，我们需要做的仅仅是实例化好产品类，然后交给调用者使用。对调用者来说，产品所依赖的类都是透明的。
 ```
 
-### 1、简单工厂
+#### 1、简单工厂
 
 **在创建一个对象时不向客户暴露内部细节，并提供一个创建对象的通用接口。**
 
@@ -1066,11 +1068,15 @@ public class Client {
 
 
 
-### 2、工厂方法
+#### 2、工厂方法
 
 **定义了一个创建对象的接口，但由子类决定要实例化哪个类。工厂方法把实例化操作推迟到子类。**
 
-![img](Java工程.assets/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f66346430616664302d386537382d343931342d396536302d3433363665616630363562352e706e67-1619579691740)
+
+
+![img](./Java工程.assets/工厂方法.png)
+
+
 
 在**简单工厂**中，创建对象的是**另一个类**，而在**工厂方法**中，是由**子类**来创建对象。
 
@@ -1103,11 +1109,15 @@ public class ConcreteFactory2 extends Factory {
 
 
 
-### 3、抽象工厂
+#### 3、抽象工厂
 
 **提供一个接口，创建相关的对象家族。**
 
-![img](Java工程.assets/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f65323139306333362d386232372d343639302d626465352d3939313130323061313239342e706e67-1619579688351)
+
+
+![img](./Java工程.assets/抽象工厂.png)
+
+
 
 抽象工厂模式创建的是对象家族，也就是**很多对象**而不是一个对象，并且这些对象是**相关**的，也就是说**必须一起创建出来**。而**工厂方法模式只是用于创建一个对象**，这和抽象工厂模式有很大不同。
 
@@ -1167,7 +1177,84 @@ public class Client {
 
 
 
-## 代理模式
+## 二、行为型模式：
+
+### 1、模板方法
+
+**定义算法框架**，并将一些步骤的实现延迟到子类。
+
+通过模板方法，**子类可以重新定义算法的某些步骤，而不用改变算法的结构。**
+
+![img](./Java工程.assets/模板方法.png)
+
+
+
+![image-20210601180323871](./Java工程.assets/模板方法-例子.png)
+
+
+
+```java
+public abstract class CaffeineBeverage {
+    final void prepareRecipe() {
+        boilWater();
+        brew();
+        pourInCup();
+        addCondiments();
+    }
+
+    abstract void brew();
+
+    abstract void addCondiments();
+
+    void boilWater() {
+        System.out.println("boilWater");
+    }
+
+    void pourInCup() {
+        System.out.println("pourInCup");
+    }
+}
+```
+
+```java
+public class Coffee extends CaffeineBeverage {
+    @Override
+    void brew() {
+        System.out.println("Coffee.brew");
+    }
+
+    @Override
+    void addCondiments() {
+        System.out.println("Coffee.addCondiments");
+    }
+}
+```
+
+```java
+public class Tea extends CaffeineBeverage {
+    @Override
+    void brew() {
+        System.out.println("Tea.brew");
+    }
+
+    @Override
+    void addCondiments() {
+        System.out.println("Tea.addCondiments");
+    }
+}
+```
+
+
+
+
+
+
+
+## 三、结构型模式：
+
+
+
+### 1、代理模式
 
 **用于控制其它对象的访问。**
 
@@ -1258,6 +1345,132 @@ public class ImageViewer {
 ```
 
  
+
+
+
+### 2、装饰模式(Decorator)
+
+**为对象动态添加功能。**
+
+![img](./Java工程.assets/装饰模式.png)
+
+***装饰者（Decorator）***和***具体组件（ConcreteComponent）***都继承自***组件（Component）***，**具体组件的方法实现不需要依赖于其它对象**，而**装饰者组合了一个组件**，这样它**可以装饰其它装饰者或者具体组件**。
+
+装饰，是指把这个装饰者套在被装饰者之上，从而动态扩展被装饰者的功能。装饰者的方法有一部分是自己的，属于它的功能，然后调用被装饰者的方法实现，从而也保留了被装饰者的功能。
+
+具体组件是装饰层次的最底层，因为只有具体组件的方法实现不需要依赖其他对象。
+
+
+
+**例子：**
+
+设计不同种类的饮料，饮料可以添加配料，比如可以添加牛奶，并且支持动态添加新配料。每增加一种配料，该饮料的价格就会增加，要求计算价格。
+
+![img](./Java工程.assets/装饰模式-例子.png)
+
+上图表示在 DarkRoast 饮料上新增新添加 Mocha 配料，之后又添加了 Whip 配料。DarkRoast 被 Mocha 包裹，Mocha 又被 Whip 包裹。它们都继承自相同父类，都有 cost() 方法，外层类的 cost() 方法调用了内层类的 cost() 方法。
+
+
+
+```java
+/*
+	这个例子中，Beverage表示组件Component，DarkRoast、HouseBlend表示具体组件ConcreteComponent，CondimentDecorator表示装饰者Decorator。
+*/
+
+// 定义一个接口
+public interface Beverage {
+    double cost();
+}
+
+// DarkRoast实现这个接口，最里面的圈
+public class DarkRoast implements Beverage {
+    @Override
+    public double cost() {
+        return 1;
+    }
+}
+
+// HouseBlend是另一个实现这个接口的类
+public class HouseBlend implements Beverage {
+    @Override
+    public double cost() {
+        return 1;
+    }
+}
+
+// 定义一个抽象类表示加的配料
+public abstract class CondimentDecorator implements Beverage {
+    protected Beverage beverage;
+}
+
+// Milk类继承自这个抽象类
+public class Milk extends CondimentDecorator {
+    public Milk(Beverage beverage) {
+        this.beverage = beverage;
+    }
+
+    @Override
+    public double cost() {
+        return 1 + beverage.cost();
+    }
+}
+// Mocha类继承自这个抽象类
+public class Mocha extends CondimentDecorator {
+    public Mocha(Beverage beverage) {
+        this.beverage = beverage;
+    }
+
+    @Override
+    public double cost() {
+        return 1 + beverage.cost();
+    }
+}
+
+/*
+	beverage表示new的一个HouseBlend实例，然后在这个具体组件上包装--套了一层Milk、Mocha，实现装饰者模式。
+*/
+public class Client {
+    public static void main(String[] args) {
+        Beverage beverage = new HouseBlend();
+        beverage = new Mocha(beverage);
+        beverage = new Milk(beverage);
+        System.out.println(beverage.cost());
+    }
+}
+
+// HouseBlend + Milk + Mocha  结果是3.0
+```
+
+**设计原则：**
+
+类应该对扩展开放，对修改关闭：也就是**添加新功能时不需要修改代码**。**饮料可以动态添加新的配料，而不需要去修改饮料的代码**。
+
+不可能把所有的类设计成都满足这一原则，应当把该原则应用于**最有可能发生改变的地方。**
+
+
+
+#### Java IO
+
+Java IO使用了装饰者模式来实现。
+
+	InputStream是抽象组件。
+	FileInputStream是InputStream的子类，属于具体组件，提供字节流的输入操作。
+	FilterInputStream属于抽象装饰者，装饰者用于装饰组件，为组件提供额外的功能。
+			---例如BufferedInputStream为FileInputStream提供缓存的功能。
+
+![在这里插入图片描述](/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/20210313200551736.png)
+实例化一个具有缓存功能的字节流对象，只需要在FileInputStream对象上套一层BufferedInputStream对象
+
+```java
+FileInputStream fileInputStream = new FileInputStream(filePath);
+BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+```
+
+DataInputStream 装饰者提供了对更多数据类型进行输入的操作，比如 int、double 等基本类型。
+
+## 
+
+
 
 # --------------------------------------------------------------------------———————————————————————————————  
 
