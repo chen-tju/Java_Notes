@@ -1177,6 +1177,83 @@ public class Client {
 
 
 
+### 3、建造者模式 Builder
+
+**用于封装一个对象的构造过程，并允许按步骤构造。**
+
+![img](./Java工程.assets/builder模式.png)
+
+**StringBuilder实现——JDK源码**
+
+```java
+public class AbstractStringBuilder {
+    protected char[] value;
+    protected int count;
+
+    public AbstractStringBuilder(int capacity) {
+        count = 0;
+        value = new char[capacity];
+    }
+
+    public AbstractStringBuilder append(char c) {
+        ensureCapacityInternal(count + 1);
+        value[count++] = c;
+        return this;
+    }
+
+    private void ensureCapacityInternal(int minimumCapacity) {
+        // overflow-conscious code
+        if (minimumCapacity - value.length > 0)
+            expandCapacity(minimumCapacity);
+    }
+
+    void expandCapacity(int minimumCapacity) {
+        int newCapacity = value.length * 2 + 2;
+        if (newCapacity - minimumCapacity < 0)
+            newCapacity = minimumCapacity;
+        if (newCapacity < 0) {
+            if (minimumCapacity < 0) // overflow
+                throw new OutOfMemoryError();
+            newCapacity = Integer.MAX_VALUE;
+        }
+        value = Arrays.copyOf(value, newCapacity);
+    }
+}
+```
+
+```java
+public class StringBuilder extends AbstractStringBuilder {
+    public StringBuilder() {
+        super(16);
+    }
+
+    @Override
+    public String toString() {
+        // Create a copy, don't share the array
+        return new String(value, 0, count);
+    }
+}
+```
+
+```java
+public class Client {
+    public static void main(String[] args) {
+        StringBuilder sb = new StringBuilder();
+        final int count = 26;
+        for (int i = 0; i < count; i++) {
+            sb.append((char) ('a' + i));
+        }
+        System.out.println(sb.toString());
+    }
+}
+```
+
+
+
+
+
+
+
 ## 二、行为型模式：
 
 ### 1、模板方法
@@ -1825,6 +1902,288 @@ MVC 是一种设计模式,Spring MVC 是一款很优秀的 MVC 框架。Spring M
 
 
 
+## 0、MyBatis、JDBC、Hibernate、IBatis对比：
+
+**1、JDBC 的缺点：**
+
+- 工作量较大。需要先连接，然后处理JDBC底层事务，处理数据类型。需要操作Connection对象、Statement对象和ResultSet对象去取数据，并准确关闭它们。
+- 要对JDBC的编程可能产生的异常进行捕捉处理并正确关闭资源。
+
+在工程中很少使用JDBC编程，通常使用对象关系映射（Object Relational Mapping，ORM），将数据库对象和POJO相互映射。
+
+**2、Hibernate 的缺点：**
+
+- 全表映射不便，比如更新时需要发送所有的字段。
+- 无法根据不同的条件组装不同的SQL。
+- 对多表关联和复杂SQL查询支持较差，需要自己写SQL，返回后需要手动将数据组装为POJO。
+- 不能有效支持存储过程。
+- 虽然有HQL，但是性能较差。大型网站优化SQL的需求，Hibernate做不到。
+
+**3、 MyBatis 的特点：**
+
+- 使用xml维护SQL，对需要优化SQL效率的地方提供方便，同时也分离了代码和SQL。
+- 动态拼接SQL，灵活度大。
+
+**缺点：**
+
+- 是半自动化ORM映射工具，SQL、POJO、映射规则都要自己手写
+- 编写的SQL依赖于数据库，（比如MySQL和Oracle在字符串连接上就不一样），所以数据库移植性能差。
+
+
+
+4、**Mybatis 是 IBatis 的进化版**，相比较 IBatis, Mybatis 提供更加丰富的功能。
+
+- 提供接口绑定，其中包括注解、XML 两种方式绑定 SQL;
+- 动态 SQL 由原来的节点配置变成了 OGNL 表达式；
+- 一对一、一对多的场景下，引进了 `association`, 可以在 `<resultMap />` 里面配置。
+
+
+
+## Mybatis 的组件：
+
+- **SqlSessionFactoryBuilder(构造器)**：它会**根据配置信息或者代码来生成 SqISessionFactory(工厂接口)**，采用的是分步构建的 **Builder 建造者模式**。
+
+   ——MyBatis提供xml、Java代码两种模式创建SqlSessionFactory，一般使用xml配置文件创建工厂接口。
+
+- **SqlSessionFactory (工厂接口)**：依靠它来**生成 SqlSession(会话)**，使用的是**工厂模式**。
+
+  ——SqlSessionFactory是一个接口，存在两个实现类：SqlSessionManager和DefaultSqlSessionFactory。
+
+- **SqlSession (会话)**：是一个既可以**发送 SQL 执行并返回结果**，也**可以获取 Mapper 的接口**。在现有的技术中， 一般我们会让其在业务逻辑代码中“消失”，而使用的是 MyBatis 提供的 SQLMapper 接口编程技术，它能提高代码的可读性和可维护性。  
+
+  ——SqlSession 接口有两个实现类，DefaultSqlSession 和 SqlSessionManager。 DefaultSqlSession 是单线程使用的，而 SqlSessionManager 在多线程 环境下使用。 SqlSession 的作用类似于一个 JDBC 中的 Connection 对象，代表着一个连接资源的启用，开启会话。作用有 3 个：
+
+  1. 获取 Mapper 接口（直接通过命名信息去执行SQL返回结果Mapper）
+  2. 发送 SQL 给数据库
+  3. 控制数据库事务。 
+
+- **SQL Mapper(映射器)**： MyBatis 新设计存在的组件，它由**一个 Java 接口和对应的 XML 文件（或注解）构成**，需要给出对应的 SQL 和映射规则。它负责发送SQL去执行， 并返回结果。
+
+  映射器的主要作用是将SQL查询到的结果映射为一个POJO，或者将POJO的数据插入到数据库中，并定义一些关于缓存等的重要内容。
+
+  1. 描述映射规则。
+
+  2. 提供 SQL 语旬， 并可以配置 SQL 参数类型、返回类型、缓存刷新等信息。
+
+  3. 配置缓存。
+
+  4. 提供动态 SQL。
+
+     映射器的主要作用就是将 SQL 查询到的结果映射为一个POJO，或者将POJO的数据插入到数据库中，并定义一些关于缓存等的重要内容。 
+
+![img](/Users/chen/IdeaProjects/Java_Notes/Java工程.assets/70.png)
+
+
+
+
+
+## **MyBatis的工作流程？**
+
+1）**读取 MyBatis 配置文件**：mybatis-config.xml 为 MyBatis 的全局配置文件，配置了 MyBatis 的运行环境等信息，例如数据库连接信息。
+
+2）**加载映射文件**。映射文件即 SQL 映射文件，该文件中配置了操作数据库的 SQL 语句，需要在 MyBatis 配置文件 mybatis-config.xml 中加载。mybatis-config.xml 文件可以加载多个映射文件，每个文件对应数据库中的一张表。
+
+3）**构造会话工厂**：通过 MyBatis 的环境等配置信息构建会话工厂 SqlSessionFactory。
+
+4）**创建会话对象**：由会话工厂创建 SqlSession 对象，该对象中包含了执行 SQL 语句的所有方法。
+
+5）**Executor 执行**器：MyBatis 底层定义了一个 Executor 接口来操作数据库，它将根据 SqlSession 传递的参数动态地生成需要执行的 SQL 语句，同时负责查询缓存的维护。
+
+6）**MappedStatement 对象**：在 Executor 接口的执行方法中有一个 MappedStatement 类型的参数，该参数是对映射信息的封装，用于存储要映射的 SQL 语句的 id、参数等信息。
+
+7）**输入参数映射**：输入参数类型可以是 Map、List 等集合类型，也可以是基本数据类型和 POJO 类型。输入参数映射过程类似于 JDBC 对 preparedStatement 对象设置参数的过程。
+
+8）**输出结果映射**：输出结果类型可以是 Map、 List 等集合类型，也可以是基本数据类型和 POJO 类型。输出结果映射过程类似于 JDBC 对结果集的解析过程。
+
+
+
+**MyBatis编程的一般步骤：**
+
+1. 创建 SqlSessionFactory 对象。
+2. 通过 SqlSessionFactory 获取 SqlSession 对象。
+3. 通过 SqlSession 获得 Mapper 代理对象。
+4. 通过 Mapper 代理对象，执行数据库操作。
+5. 执行成功，则使用 SqlSession 提交事务。
+6. 执行失败，则使用 SqlSession 回滚事务。
+7. 最终，关闭 `session` 会话。
+
+
+
+## **MyBatis的功能架构是怎样的？**
+
+可以把Mybatis的功能架构分为三层：
+
+- **API接口层**：提供给外部使用的接口API，开发人员通过这些本地API来操纵数据库。接口层一接收到调用请求就会调用数据处理层来完成具体的数据处理。
+
+- **数据处理层**：负责具体的SQL查找、SQL解析、SQL执行和执行结果映射处理等。它主要的目的是根据调用的请求完成一次数据库操作。
+
+- **基础支撑层**：负责最基础的功能支撑，包括连接管理、事务管理、配置加载和缓存处理，这些都是共用的东西，将他们抽取出来作为最基础的组件。为上层的数据处理层提供最基础的支撑。
+
+
+
+## **MyBatis 缓存机制**
+
+**缓存机制用来减轻数据库压力，提高数据库性能。**
+
+源码：[MyBatis源码解析](https://www.exception.site/java-interview/talk-about-cache-mechanism-of-mybatis)
+
+### 1、一级缓存
+
+![img](./Java工程.assets/一级缓存.png)
+
+一级缓存为 **`sqlsesson` 缓存**，缓存的数据**只在 SqlSession 内有效**, 可以看作是一个没有容量限定的HashMap。在操作数据库的时候需要**先创建 SqlSession 会话对象**，在对象中有一个 HashMap 用于存储缓存数据，此 HashMap 是**当前会话对象私有**的，别的 SqlSession 会话对象无法访问。
+
+BaseExecutor成员变量之一的**PerpetualCache**，是对Cache接口最基本的实现， 其实现非常简单，**内部持有HashMap**，对一级缓存的操作实则是对HashMap的操作。
+
+
+
+**1、一级缓存的生命周期：**
+
+- MyBatis一级缓存的生命周期和SqlSession一致; 
+
+- MyBatis的一级缓存最大范围是SqlSession内部，有多个SqlSession或者分布式的环境下，数据库写操作会引起脏数据; 
+
+
+
+**2、一级缓存何时失效：**
+
+- a. MyBatis在开启一个数据库会话时，会创建一个新的SqlSession对象，SqlSession对象中会有一个新的Executor对象，Executor对象中持有一个新的PerpetualCache对象；当会话结束时，SqlSession对象及其内部的Executor对象还有PerpetualCache对象也一并释放掉。
+
+- b. 如果SqlSession调用了close()方法，会释放掉一级缓存PerpetualCache对象，一级缓存将不可用；
+
+- c. 如果SqlSession调用了clearCache()，会清空PerpetualCache对象中的数据，但是该对象仍可使用；
+
+- d.SqlSession中执行了任何一个update操作update()、delete()、insert() ，都会清空PerpetualCache对象的数据
+
+
+
+**3、具体流程：**
+
+- 第一次执行 **select 完**毕会将查到的数据**写入 SqlSession 内的 HashMap** 中缓存起来
+
+- a.对于某个查询，根据statementId,params,rowBounds来构建一个key值，根据这个key值去缓存Cache中取出对应的key值存储的缓存结果；
+
+- b. 判断从Cache中根据特定的key值取的数据数据是否为空，即是否命中；
+
+- c. 如果命中，则直接将缓存结果返回；
+
+- d. 如果没命中：去数据库中查询数据，得到查询结果；将key和查询到的结果分别作为key,value对存储到Cache中；将查询结果返回.
+
+![img](./Java工程.assets/一级缓存流程.png)
+
+**4、注意：**
+
+- 1、如果 **SqlSession** 执行了 **DML 操作**（insert、update、delete），并 **commit** 了，那么 mybatis 就会**清空当前 SqlSession 缓存**中的所有缓存数据，这样可以**保证缓存中的存的数据永远和数据库中一致**，避免出现差异。
+
+- 2、当一个 **SqlSession 结束**后那么他里面的**一级缓存也就不存在**了， mybatis **默认是开启一级缓存，不需要配置**
+
+- 3、 mybatis 的缓存是基于 **[namespace:sql语句:参数]** 来进行缓存的，意思就是， SqlSession 的 HashMap 存储缓存数据时，是使用 **[namespace:sql:参数] 作为 key** ，**查询返回的语句作为 value** 保存的。
+
+
+
+**5、源码**
+
+**SqlSession**： 对外提供了用户和数据库之间交互需要的所有方法，隐藏了底层的细节。默认实现类是`DefaultSqlSession`。
+
+**Executor**： `SqlSession`向用户提供操作数据库的方法，但和数据库操作有关的职责都会委托给Executor。
+
+![img](./Java工程.assets/Executor.png)
+
+
+
+**Cache**： MyBatis中的Cache接口，提供了和缓存相关的最基本的操作.——装饰者模式
+
+![img](./Java工程.assets/cache.png)
+
+
+
+**6、总结**
+
+1. MyBatis一级缓存的生命周期和SqlSession一致。
+2. MyBatis一级缓存内部设计简单，只是一个没有容量限定的HashMap，在缓存的功能性上有所欠缺。
+3. MyBatis的一级缓存最大范围是SqlSession内部，有多个SqlSession或者分布式的环境下，数据库写操作会引起脏数据，建议设定缓存级别为Statement。
+
+
+
+### 2、二级缓存
+
+![img](./Java工程.assets/二级缓存.png)
+
+二级缓存是**` mapper` 级别的缓存**，也就是**同一个 namespace 的 mapper.xml** ，当**多个 SqlSession 使用同一个 Mapper 操作数据库时**，得到的数据会缓存在**同一个二级缓存区域。**
+
+二级缓存默认是没有开启的。需要在 setting 全局参数中配置开启二级缓存，开启二级缓存步骤：
+
+```
+1、`conf.xml` 配置全局变量开启二级缓存
+	<settings>
+    <setting name="cacheEnabled" value="true"/>默认是false：关闭二级缓存
+	<settings>
+
+2、在` userMapper.xml `中配置
+	<cache eviction="LRU" flushInterval="60000" size="512" readOnly="true"/>当前mapper下所有语句开启二级缓存
+这里配置了一个 LRU 缓存，并每隔60秒刷新，最大存储512个对象，而返回的对象是只读的
+
+
+补充：若想禁用当前`select`语句的二级缓存，添加 `useCache="false"`修改如下：
+	<select id="getCountByName" parameterType="java.util.Map" resultType="INTEGER" statementType="CALLABLE" useCache="false">
+```
+
+
+
+**具体流程：**
+
+- 1.当一个` sqlseesion `执行了一次` select` 后，在**关闭此` session` 的时候**，会将查询结果**缓存到二级缓存。**
+
+- 2.当另一个` sqlsession `执行` select` 时，**首先会在他自己的一级缓存中找**，**如果没找到**，就**去二级缓存中找**，**找到了就返回**，就不用去数据库了，从而减少了数据库压力提高了性能。
+
+**注意:**
+
+- 1、如果 `SqlSession` 执行了 DML 操作`（insert、update、delete）`，并 `commit` 了，那么 `mybatis` 就会清空当前` mapper` 缓存中的所有缓存数据，这样可以保证缓存中的存的数据永远和数据库中一致，避免出现差异
+
+- 2、` mybatis` 的缓存是基于` [namespace:sql语句:参数] `来进行缓存的，意思就是，`SqlSession` 的 `HashMap` 存储缓存数据时，是使用 `[namespace:sql:参数] `作为 `key` ，查询返回的语句作为 `value` 保存的。
+
+
+
+![img](./Java工程.assets/二级缓存源码.png)
+
+**总结：**
+
+1. MyBatis的二级缓存相对于一级缓存来说，实现了`SqlSession`之间缓存数据的共享，同时粒度更加的细，能够到`namespace`级别，通过Cache接口实现类不同的组合，对Cache的可控性也更强。
+2. MyBatis在多表查询时，极大可能会出现脏数据，有设计上的缺陷，安全使用二级缓存的条件比较苛刻。
+3. 在分布式环境下，由于默认的MyBatis Cache实现都是基于本地的，分布式环境下必然会出现读取到脏数据，需要使用集中式缓存将MyBatis的Cache接口实现，有一定的开发成本，直接使用Redis、Memcached等分布式缓存可能成本更低，安全性也更高。
+
+
+
+
+
+## MyBatis模糊查询的方式：
+
+- 方式1：$ 这种方式，简单，但是无法防止SQL注入，所以不推荐使用
+
+    LIKE '%${name}%'
+
+- 方式2：#
+
+    LIKE "%"#{name}"%"
+
+- 方式3：字符串拼接
+
+  AND name LIKE CONCAT(CONCAT('%',#{name},'%'))
+
+- 方式4：bind标签
+
+    <bind name="pattern2" value="'%' + _parameter.address + '%'" />
+
+- 方式5：java代码里写
+
+  param.setUsername("%CD%"); 在 java 代码中传参的时候直接写上
+
+   <if test="username!=null"> AND username LIKE #{username}</if>
+
+  然后 mapper 里面直接写 #{} 就可以了
+
+  
+
 ## 1、#{} 和 ${} 的区别是什么？
 
 1. `#{}`是 **sql 的参数占位符**，MyBatis 会将 sql 中的`#{}`**替换为 ? 号**，在 sql 执行前会使用 **PreparedStatement 的参数设置方法**，**按序**给 sql 的 ? 号占位符**设置参数值**，比如 ps.setInt(0, parameterValue)，`#{item.name}` 的取值方式为使用反射从参数对象中获取 item 对象的 name 属性值，相当于 `param.getItem().getName()`。
@@ -1864,13 +2223,13 @@ value 应该是一个数值吧。然后如果对方传过来的是 001  and name
 其它：
 
 - `<include>`标签引入 sql 片段
-
 - `<selectKey>`为不支持自增的主键生成策略标签。
-
 - `cache` – 给定命名空间的缓存配置。
 - `cache-ref` – 其他命名空间缓存配置的引用。
 - `resultMap` – 是最复杂也是最强大的元素，用来描述如何从数据库结果集中来加载对象。
 - `<parameterMap>`--已被废弃！老式风格的参数映射。更好的办法是使用内联参数，此元素可能在将来被移除。
+
+
 
 **2、动态SQL**的9个标签
 
@@ -1882,65 +2241,180 @@ value 应该是一个数值吧。然后如果对方传过来的是 001  and name
 
 ## 3、Dao接口：
 
-**通常一个xml映射文件会对应写一个Dao接口，Dao接口的工作原理是什么？**
+**1、通常一个xml映射文件会对应写一个Dao接口，Dao接口的工作原理是什么？**
 
-**Dao接口里的方法，参数不同时，方法能重载吗？**
+Dao接口，也就是Mapper接口。
 
+接口的**全限名**，就是映射文件中的namespace的值；接口的**方法名**，就是映射文件中Mapper的Statement的id值；接口方法内的**参数**，就是传递给sql的参数。
 
+Mapper接口是**没有实现类**的，当调用接口方法时，**接口全限名+方法名拼接字符串作为key值**，可唯一定位一个MapperStatement。在Mybatis中，每一个 <select>、<insert>、<update>、<delete>标签，都会被**解析为一个MapperStatement对象。**
 
+*举例来说：cn.mybatis.mappers.StudentDao.findStudentById，可以唯一找到namespace为 com.mybatis.mappers.StudentDao下面 id 为 findStudentById 的 MapperStatement。*
 
-
-
-
-## 4、MyBatis怎么进行分页？分页插件的原理是什么？
-
-
+**Mapper 接口的工作原理是JDK动态代理，Mybatis运行时会使用JDK动态代理为Mapper接口生成代理对象proxy，代理对象会拦截接口方法，转而执行MapperStatement所代表的sql，然后将sql执行结果返回。**
 
 
 
+**2、Dao接口里的方法，参数不同时，方法能重载吗？**
 
+~~Mapper接口里的方法，是不能重载的，因为是使用 全限名+方法名 的保存和寻找策略。~~
+
+Dao 接口里的方法可以重载，但是Mybatis的XML里面的ID不允许重复。
+
+**Mybatis 的 Dao 接口可以有多个重载方法，但是多个接口对应的映射必须只有一个，否则启动会报错。**
+
+
+
+### 接口绑定的两种方式：
+
+1、使用**注解**，在接口的方法上面添加@Select、@Update等注解，里面写上对应的SQL语句进行SQL语句的绑定。
+
+2、通过**映射文件xml**方式进行绑定，指定xml映射文件中的namespace对应的接口的全路径名
+
+ **当SQL语句比较简单的时候，使用注解绑定就可以了，当SQL语句比较复杂的话，使用xml方式绑定，一般用xml方式绑定比较多**
+
+
+
+## 4、MyBatis分页
+
+#### 1、**MyBatis实现分页功能：**
+
+1. **原始方法，使用 limit**，需要自己处理分页逻辑：
+
+   对于 mysql 数据库可以使用 limit ，对于  oracle 数据库可以使用 rownum 。
+
+2. **拦截StatementHandler**，其实质还是在最后生成limit语句
+
+3. **使用PageHelper插件**，这是目前比较常见的方法。
+
+
+
+#### 2、MyBatis的四种分页方式：
+
+- **数组分页**：在Service代码中进行处理。查询出全部数据，然后在list中截取需要的部分。
+
+- **sql分页**：在xml文件中SQL语句中使用limit。
+
+- **拦截器分页**：创建拦截器，拦截器MyBatis接口方法id以ByPage结束的语句。--处理数据量大的情况。
+
+- **RowBounds分页：**在mybatis接口加入RowBounds参数，适于处理小数据量的情况。
+
+  
+
+#### 3、MyBatis是如何进行分页的？
+
+​		MyBatis 内部使用 **RowBounds 对象**进行分页，它是针对 **ResultSet 结果集**执行的**内存分页**，而**非物理分页**，可以**在 sql 内直接书写带有物理分页的参数来完成物理分页功能，也可以使用分页插件来完成物理分页。**
+
+
+
+#### 4、分页插件的原理是什么？
+
+- **分页插件**的基本原理是使用 MyBatis 提供的插件接口，实现自定义插件，**在插件的拦截方法内拦截待执行的 sql，然后重写 sql**，根据 dialect 方言，添加对应的物理分页语句和物理分页参数。
+
+- 举例：`select _ from student`，拦截 sql 后重写为：`select t._ from （select \* from student）t limit 0，10`
 
 
 
 ## 5、MyBatis插件的运行原理：
 
+​		MyBatis 仅可以编写针对 `ParameterHandler`、 `ResultSetHandler`、`StatementHandler`、`Executor` 这 4 种接口的插件，MyBatis 使用 JDK 的动态代理，为需要拦截的接口生成代理对象以实现接口方法拦截功能，每当执行这 4 种接口对象的方法时，就会进入拦截方法，具体就是 `InvocationHandler` 的 `invoke()`方法，当然，只会拦截那些你指定需要拦截的方法。
 
+
+
+**如何编写一个插件？**
+
+​		实现 MyBatis 的 Interceptor 接口并复写` intercept()`方法，然后在给插件编写注解，指定要拦截哪一个接口的哪些方法即可，记住，别忘了在配置文件中配置你编写的插件。
 
 
 
 ## 6、MyBatis执行批量插入，能返回数据库主键列表吗？
 
+可以。
+
+例如：在mapper.xml中插入内容：
+
+```xml
+	<insert id="insertBatch" parameterType="User">
+		insert into user(id,username,passwd,age,birthday,salary,user_describe,id_number)
+		values
+		<foreach collection="list" item="user" index="index" separator=",">
+			(null,#{user.username},#{user.passwd},#{user.age},#{user.birthday},#{user.salary},#{user.user_describe},#{user.id_number})
+		</foreach>
+	</insert>
+```
+
+
+
+### MyBatis获取自增主键的方式：
+
+```xml
+MySQL 数据库：
+
+// 方式一： 使用 useGeneratedKeys + keyProperty 属性，这种在项目中比较常用
+<insert id="insert" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO user(name, password)
+    VALUE (#{name}, #{password})
+</insert>
+    
+// 方式二： 使用 `<selectKey />` 标签
+<insert id="insert" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+    <selectKey keyProperty="id" resultType="long" order="AFTER">
+        SELECT LAST_INSERT_ID()
+    </selectKey>
+        
+    INSERT INTO user(name, password)
+    VALUE (#{name}, #{password})
+</insert>
+```
 
 
 
 
 
+## 7、MyBatis动态sql：
 
-## 7、MyBatis动态sql的执行原理：
+- MyBatis 动态 sql 可以让我们**在 Xml 映射文件内**，**以标签的形式编写动态 sql**，完成**逻辑判断**和**动态拼接 sql** 的功能。
 
-
-
-
+- **动态SQL**的9个标签：`trim、where、set、foreach、if、choose、when、otherwise、bind`等
+- **执行原理：**使用OGNL从sql参数对象中计算表达式的值，根据表达式的值动态拼接sql，以此完成动态sql的功能。
 
 
 
 ## 8、MyBatis怎么将sql执行结果封装为目标对象并返回？
 
+- 第一种是**使用`<resultMap>`标签**，**逐一定义列名和对象属性名之间的映射关系**。
+- 第二种是**使用 sql 列的别名功能**，**将列别名书写为对象属性名**，比如 T_NAME AS NAME，对象属性名一般是 name，小写，但是列名不区分大小写，MyBatis 会忽略列名大小写，智能找到与之对应对象属性名，你甚至可以写成 T_NAME AS NaMe，MyBatis 一样可以正常工作。
 
-
-
+有了列名与属性名的映射关系后，**MyBatis 通过反射创建对象**，同时**使用反射给对象的属性逐一赋值并返回**，那些找不到映射关系的属性，是无法完成赋值的。
 
 
 
 ## 9、MyBatis能执行一对一、一对多的关联查询吗？有哪些实现方式及之间的区别是什么？
 
+MyBatis 不仅可以执行一对一、一对多的关联查询，还可以执行多对一，多对多的关联查询，多对一查询，其实就是一对一查询，只需要把 `selectOne()`修改为 `selectList()`即可；多对多查询，其实就是一对多查询，只需要把 `selectOne()`修改为 `selectList()`即可。
 
+**关联对象查询**，有两种实现方式：
+
+- 一种是单独发送一个 sql 去查询关联对象，赋给主对象，然后返回主对象。
+- 另一种是使用嵌套查询，嵌套查询的含义为使用 join 查询，一部分列是 A 对象的属性值，另外一部分列是关联对象 B 的属性值，好处是只发一个 sql 查询，就可以把主对象和其关联对象查出来。
+
+那么问题来了，join 查询出来 100 条记录，如何确定主对象是 5 个，而不是 100 个？其去重复的原理是**`<resultMap>`标签内的`<id>`子标签，指定了唯一确定一条记录的 id 列，MyBatis 根据列值来完成 100 条记录的去重复功能**，`<id>`可以有多个，代表了联合主键的语意。
+
+同样主对象的关联对象，也是根据这个原理去重复的，尽管一般情况下，**只有主对象会有重复记录，关联对象一般不会重复。**
+
+*举例：下面 join 查询出来 6 条记录，一、二列是 Teacher 对象列，第三列为 Student 对象列，MyBatis 去重复处理后，结果为 1 个老师 6 个学生，而不是 6 个老师 6 个学生。*
+
+*t_id t_name s_id*
+
+*| 1 | teacher | 38 | | 1 | teacher | 39 | | 1 | teacher | 40 | | 1 | teacher | 41 | | 1 | teacher | 42 | | 1 | teacher | 43 |*
 
 
 
 ## 10、MyBatis延迟加载的实现原理？
 
+MyBatis 仅**支持 association 关联对象和 collection 关联集合对象的延迟加载**，**association 指的就是一对一**，**collection 指的就是一对多查询**。在 MyBatis **配置文件**中，可以配置是否启用延迟加载 **`lazyLoadingEnabled=true|false。`**
 
+它的原理是，使用` CGLIB` 创建目标对象的代理对象，当调用目标方法时，进入拦截器方法，比如调用 `a.getB().getName()`，拦截器 `invoke()`方法发现 `a.getB()`是 null 值，那么就会单独发送事先保存好的查询关联 B 对象的 sql，把 B 查询上来，然后调用 a.setB(b)，于是 a 的对象 b 属性就有值了，接着完成 `a.getB().getName()`方法的调用。这就是延迟加载的基本原理。
 
 
 
@@ -1948,25 +2422,39 @@ value 应该是一个数值吧。然后如果对方传过来的是 001  and name
 
 ## 11、MyBatis的xml映射文件中，不同的xml映射文件，id是否可以重复？
 
+不同的 Xml 映射文件，**如果配置了 namespace，那么 id 可以重复**；**如果没有配置 namespace，那么 id 不能重复**；毕竟 namespace 不是必须的，只是最佳实践而已。
+
+原因就是 **namespace+id 是作为 `Map<String, MappedStatement>`的 key 使用**的，如果没有 namespace，就剩下 id，那么，id 重复会导致数据互相覆盖。有了 namespace，自然 id 就可以重复，namespace 不同，namespace+id 自然也就不同。
 
 
 
+## 12、**当实体Bean类中的属性名和表中的字段名不一样 ，怎么办？**
 
-## 12、MyBatis中如何执行批处理？
+- 第1种： 通过在查询的sql语句中定义字段名的别名，让字段名的别名和实体类的属性名一致。
 
+- 第2种： 通过resultMap标签来映射字段名和实体类属性名的自定义映射规则。
 
+- 第3种： 在MyBatis的全局配置文件中开启驼峰命名规则。
 
-
+*可以直接用方便的MyBatis-Generator插件来直接生成表对应的Bean类*
 
 ## 13、MyBatis的Executor执行器之间的区别是什么？
 
+MyBatis 有三种基本的 Executor 执行器，**`SimpleExecutor`、`ReuseExecutor`、`BatchExecutor`。**
 
+- **`SimpleExecutor`：**每执行一次 update 或 select，就开启一个 Statement 对象，用完立刻关闭 Statement 对象。
+
+- **`ReuseExecutor`：**执行 update 或 select，以 sql 作为 key 查找 Statement 对象，存在就使用，不存在就创建，用完后，不关闭 Statement 对象，而是放置于 Map<String, Statement>内，供下一次使用。简言之，就是重复使用 Statement 对象。
+
+- **`BatchExecutor`：**执行 update（没有 select，JDBC 批处理不支持 select），将所有 sql 都添加到**批处理**中（addBatch()），等待统一执行（executeBatch()），它缓存了多个 Statement 对象，每个 Statement 对象都是 addBatch()完毕后，等待逐一执行 executeBatch() 批处理。与 JDBC 批处理相同。
+
+作用范围：Executor 的这些特点，都严格限制在 SqlSession 生命周期范围内。
 
 
 
 **如何指定使用哪一种Executor执行器？**
 
-
+-  在MyBatis 配置文件中，可以指定默认的 ExecutorType 执行器类型，也可以手动给 `DefaultSqlSessionFactory` 的创建 SqlSession 的方法传递 ExecutorType 类型参数。
 
 
 
@@ -1974,27 +2462,37 @@ value 应该是一个数值吧。然后如果对方传过来的是 001  and name
 
 ## 14、MyBatis是否可以映射Enum枚举类？
 
+MyBatis 可以映射枚举类，不单可以映射枚举类，MyBatis 可以映射任何对象到表的一列上。
 
+映射方式为自定义一个 `TypeHandler`，实现 `TypeHandler` 的 `setParameter()`和 `getResult()`接口方法。
 
-
+`TypeHandler` 有两个作用，一是完成从 javaType 至 jdbcType 的转换，二是完成 jdbcType 至 javaType 的转换，体现为 `setParameter()`和 `getResult()`两个方法，分别代表设置 sql 问号占位符参数和获取列查询结果。
 
 
 
 ## 15、MyBatis映射文件中，标签引用后的标签引用位置？
 
+虽然 MyBatis 解析 Xml 映射文件是**按照顺序解析的**，但是，被引用的 B 标签依然**可以定义在任何地方**，MyBatis 都可以正确识别。
 
+原理是，MyBatis 解析 A 标签，发现 A 标签引用了 B 标签，但是 B 标签尚未解析到，尚不存在，此时，MyBatis 会将 A 标签标记为未解析状态，然后继续解析余下的标签，包含 B 标签，待所有标签解析完毕，MyBatis 会重新解析那些被标记为未解析的标签，此时再解析 A 标签时，B 标签已经存在，A 标签也就可以正常解析完成了。
 
 
 
 ## 16、MyBatis的xml映射文件和内部数据结构之间的映射关系：
 
+MyBatis 将所有 **Xml 配置信息**都封装到 All-In-One 重量级对象 **Configuration 内部**。
 
+在 Xml 映射文件中，
+
+- **`<parameterMap>`标签**会被解析为 **`ParameterMap` 对象**，其**每个子元素**会被解析为 **ParameterMapping 对 象**。
+
+- **`<resultMap>`标签**会被解析为 **`ResultMap` 对象**，其**每个子元素**会被解析为 **`ResultMapping` 对象**。
+
+- **`<select>、<insert>、<update>、<delete>`标签**均会被解析为 **`MappedStatement` 对象**，**标签内的 sql** 会被解析为 **BoundSql 对象。**
 
 
 
 ## 17、为什么说 MyBatis 是半自动 ORM 映射工具？它与全自动的区别在哪里？
-
-
 
 **ORM**：**对象关系映射**（**Object Relational Mapping**），是一种程序设计技术，用于实现面向对象编程语言里**不同类型系统的数据之间的转换**。
 
@@ -2002,10 +2500,6 @@ value 应该是一个数值吧。然后如果对方传过来的是 001  and name
 
 **mybatis属于半ORM，因为sql语句需要自己写。**
 
-
-
 与其他比较标准的 ORM 框架（比如 Hibernate ）不同， mybatis 并没有将 Java库关联起来，而是将Java方法与sql语句关联起来，mybatis 允许用户充分利用数据库的各种功能，例如存储、视图、各种复杂的查询以及某些数据库的专有特性。
 
-
-
-自己写sql语句的好处是，可以根据自己的需求，写出最优的 sql 语句。灵活性高。但是，由于是自己写 sql 语句，导致平台可移植性不高。MySQL语句和Oracle语句不同。
+自己写sql语句的好处是，**可以根据自己的需求，写出最优的 sql 语**句。灵活性高。但是，由于是自己写 sql 语句，导致平台可移植性不高。MySQL语句和Oracle语句不同。
