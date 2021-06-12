@@ -25,23 +25,17 @@
 
 #### 项目中RPC体现在哪？
 
-Dubbo框架下，@Reference关键字实现分布式的远程服务对象的注入。
+- Dubbo框架下，@Reference关键字实现分布式的远程服务对象的注入。 
 
+- dubbo的服务订阅有两种方式，第一种是通过xml文件的标签`<dubbo:reference />`，第二种是通过注解`@Reference`。
 
+- @Reference 的行为跟 @Autowired 类似 均实现了自动注入的过程 。
 
-dubbo的服务订阅有两种方式，第一种是通过xml文件的标签`<dubbo:reference />`，第二种是通过注解`@Reference`。
-
-
-
-@Reference 的行为跟 @Autowired 类似 均实现了自动注入的过程 。
-
-dubbo也是采用了和@Autowired注入一样的原理，通过继承`InstantiationAwareBeanPostProcessor` 重写postProcessPropertyValues 方法来达到解析@Reference并实现依赖注入。
+  dubbo也是采用了和@Autowired注入一样的原理，通过继承`InstantiationAwareBeanPostProcessor` 重写postProcessPropertyValues 方法来达到解析@Reference并实现依赖注入。
 
 
 
 消费者每引用的一种服务，都会创建一个ReferenceBean， 如果多个地方使用@Reference引用同一个服务，需要看他们的的缓存key是否一样，如果都是一样的，那么就只会创建一个ReferenceBean，如果有些配置不一样，比如版本号不一致，则会创建创建不同的`ReferenceBean`对象，这也是他版本号能够起到的作用把。至此，`@Reference`注解已经解析完毕，并且服务引用的对象也已经创建了。
-
-
 
 
 
@@ -70,9 +64,9 @@ SOA 架构中由两个重要的角色: **服务提供者（Provider）和服务�
 **SOA缺点：**
 
 ```
-减低了系统的性能
+1、减低了系统的性能
 
-系统之间交互需要使用远程通信，接口开发增加工作量
+2、系统之间交互需要使用远程通信，接口开发增加工作量
 ```
 
 
@@ -80,6 +74,7 @@ SOA 架构中由两个重要的角色: **服务提供者（Provider）和服务�
 ```
 1、ZooKeeper是一个分布式的，开放源码的分布式应用程序协调服务，是Google的Chubby一个开源的实现，是Hadoop和Hbase的重要组件。
 	它是一个为分布式应用提供一致性服务的软件，提供的功能包括：配置维护、名字服务、分布式同步、组服务等。
+	
 2、Dubbo是Alibaba开源的分布式服务框架，它最大的特点是按照分层的方式来架构，使用这种方式可以使各个层之间解耦合（或者最大限度地松耦合）。
 从服务模型的角度来看，Dubbo采用的是一种非常简单的模型，要么是提供方提供服务，要么是消费方消费服务，所以基于这一点可以抽象出服务提供方（Provider）和服务消费方（Consumer）两个角色。关于注册中心、协议支持、服务监控等内容。
 ```
@@ -88,7 +83,7 @@ SOA 架构中由两个重要的角色: **服务提供者（Provider）和服务�
 
 ### 1、dubbo
 
-![在这里插入图片描述](Java工程.assets/20201215171245702.png)
+ ![在这里插入图片描述](Java工程.assets/20201215171245702.png)
 
 Dubbo只支持Java语言。
 
@@ -98,7 +93,7 @@ Dubbo 的架构主要包含四个角色，其中 Consumer 是服务消费者，P
 
 
 
-![在这里插入图片描述](Java工程.assets/20210520195512992.png)
+ ![在这里插入图片描述](Java工程.assets/20210520195512992.png)
 
 
 
@@ -126,6 +121,17 @@ Dubbo 的架构主要包含四个角色，其中 Consumer 是服务消费者，P
 - [一些面试题](https://www.cnblogs.com/hongdada/p/8572513.html)
 
 
+
+**Dubbo 和 Spring Cloud 的区别：**
+
+```
+1、Dubbo使用RPC通信，SpringCloud使用RESTful方式；
+2、组成不一样：
+dubbo的服务注册中心为Zookeerper，服务监控中心为dubbo-monitor,无消息总线，服务跟踪、批量任务等组件；
+spring-cloud的服务注册中心为spring-cloud netflix  Enruka，服务监控中心为spring-boot admin,有消息总线，数据流、服务跟踪、批量任务等组件；
+```
+
+**Dubbo内置了三种服务容器：Spring Container、Jetty Container、Log4j Container**
 
 
 
@@ -255,10 +261,6 @@ B机器进行本地调用（通过代理Proxy）之后得到了返回值，此�
 8、客户端存根（client stub）接收到消息，并进行解码（反序列化） 
 9、服务消费方得到最终结果
 ```
-
-
-
-
 
 
 
@@ -472,6 +474,325 @@ B该用户没有登录，并且结算请求时没有登录也可以访问，放�
 
 
 
+## 5、为什么需要ElasticSearch？
+
+Elasticsearch 是一个分布式的搜索与分析引擎。
+
+- **0、用数据库，也可以实现搜索的功能，为什么还需要搜索引擎呢？**
+
+数据库（理论上来讲，ES 也是数据库，这里的数据库，指的是关系型数据库），首先是**存储**，搜索只是顺便提供的功能，
+
+而搜索引擎，首先是**搜索**，但是不把数据存下来就搜不了，所以只好存一存。
+
+- **1、精确匹配和相关性匹配** 
+
+数据库是基于[精确匹配]
+
+和「精确匹配」相比，「相关性匹配」更贴近人的思维方式。
+
+相关性匹配不是数据库中的模糊查询，「模糊查询」，其实还是「精确匹配」
+
+- **2、搜索和分析，不只是搜索，还有分析**  
+
+躺在磁盘里的数据是没有价值的，而ES则让你存放在里面的数据，拥有了无限的探索力。
+
+> Elasticsearch 真正强大之处在于可以从无规律的数据中找出有意义的信息 —— 从“大数据”到“大信息”。 —— 《Elasticsearch 权威指南》
+
+**关系型数据库，把原本非常形象的对象，拍平了，拍成各个字段，存在数据库，查询时，再重新构造出对象；ES则是文档存储，把对象原原本本地放进去，取出时直接取出。**
+
+Mysql基于B+树索引，来实现快速检索，ES则基于**倒排索引**，对于文档搜索来说，倒排索引在性能和空间上都有更加明显的优势。
+
+
+
+## 项目中的ES
+
+### 1、搜索
+
+ ![在这里插入图片描述](.\Java工程.assets\项目中搜索)
+
+**搜索**：**计算机根据用户输入的关键词进行匹配，从已有的数据库中摘录出相关的记录反馈给用户。**
+
+- 若使用**传统关系型数据库**：
+  - 1、对于传统的关系性数据库对于关键词的查询，只能逐字逐行的匹配，性能非常差。
+  - 2、匹配方式不合理，比如搜索“小密手机” ，如果用like进行匹配， 根本匹配不到。但是考虑使用者的用户体验的话，除了完全匹配的记录，还应该显示一部分近似匹配的记录，至少应该匹配到“手机”。
+    ![在这里插入图片描述](.\Java工程.assets\20210324164537291.png)
+- 使用**专业全文索引**进行搜索：
+  全文搜索引擎目前主流的索引技术就是**倒排索引的方式**。-----**用内容去匹配索引**
+  - 传统的保存数据的方式都是：记录→单词
+  - 而倒排索引的保存数据的方式是：单词→记录
+    		![在这里插入图片描述](.\Java工程.assets\倒排索引举例)
+
+**搜索引擎匹配搜索：**
+	处理分词、构建倒排索引都通过Lucene实现。
+
+	1、基于分词技术构建倒排索引：-----在内容上建立索引，用内容去匹配索引---B+树
+		首先每个记录保存数据时，都不会直接存入数据库。
+		系统先会对数据进行分词，然后以倒排索引结构保存。
+	2、等到用户搜索的时候，会把搜索的关键词也进行分词，会把“红海行动”分词分成：红海和行动两个词。
+	
+	这样的话，先用红海进行匹配，得到id=1和id=2的记录编号，再用行动匹配可以迅速定位id为1,3的记录。
+	那么全文索引通常，还会根据匹配程度进行打分，显然1号记录能匹配的次数更多。
+	所以显示的时候以评分进行排序的话，1号记录会排到最前面。而2、3号记录也可以匹配到。
+
+
+
+### 2、全文检索工具Elasticsearch
+
+lucene只是一个提供全文搜索功能类库的核心工具包，而真正使用它还需要一个完善的服务框架搭建起来的应用。------lucene是类似于jdk，而搜索引擎软件就是tomcat
+
+
+**Elasticsearch**是一个基于Apache Lucene(TM)的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。
+**特点：**
+	1、分布式的实时文件存储，每个字段都被索引并可被搜索
+	2、分布式的实时分析搜索引擎--做不规则查询
+	3、可以扩展到上百台服务器，处理PB级结构化或非结构化数据
+	
+Elasticsearch也使用Java开发并使用Lucene作为其核心来实现所有索引和搜索的功能，但是它的目的是通过简单的RESTful API来隐藏Lucene的复杂性，从而让全文搜索变得简单。
+
+**ES能做什么？**
+	全文检索（全部字段）、模糊查询（搜索）、数据分析（提供分析语法，例如聚合）
+
+	elasticsearch和solr,----都是基于lucene搭建的，可以独立部署启动的搜索引擎服务软件
+		国内百度、京东、新浪都是基于elasticSearch实现的搜索功能。
+		国外就更多了 像维基百科、GitHub、Stack Overflow等等也都是基于ES的
+		区别：
+			1. Solr 利用 Zookeeper 进行分布式管理，而 Elasticsearch 自身带有分布式协调管理功能;
+			2. Solr 支持更多格式的数据，而 Elasticsearch 仅支持json文件格式；
+			3. Solr 官方提供的功能更多，而 Elasticsearch 本身更注重于核心功能，高级功能多有第三方插件提供；
+			4. Solr 在传统的搜索应用中表现好于 Elasticsearch，但在处理实时搜索应用时效率明显低于 Elasticsearch--附近的人
+
+将ES **配置**在虚拟机上：
+	--比较烦人，要切换root和其它用户。修改默认线程数、最大文件数、最大内存数
+	
+	修改四个地方：
+		elasticSearch.yml es的启动host地址
+		jvm.options配置es的虚拟机内存
+		limits.conf配置linux的线程内存和文件
+		sysctl.conf配置系统允许的软件运行内存
+
+**ES基本概念：**
+
+ ![在这里插入图片描述](.\Java工程.assets\ES基本概念)
+
+
+	1、cluster	整个elasticsearch 默认就是集群状态，整个集群是一份完整、互备的数据。
+	2、node	集群中的一个节点，一般只一个进程就是一个node
+	3、shard	分片，即使是一个节点中的数据也会通过hash算法，分成多个片存放，默认是5片。
+	4、Index(库)	相当于rdbms的database, 对于用户来说是一个逻辑数据库，虽然物理上会被分多个shard存放，也可能存放在多个node中。
+	5、Type(表)	类似于rdbms的table，但是与其说像table，其实更像面向对象中的class , 同一Json的格式的数据集合。
+	6、Document(一条数据)	类似于rdbms的 row、面向对象里的object
+	7、Field(字段)	相当于字段、属性
+
+通过(9200端口)http协议进行交互：http://192.168.199.129:9200/_cat/indices?v
+开发工具 Kibana（5601端口）：配置host、es.url，---nohup ./kibana &
+
+**ES简单的增删改查**
+PUT、DELETE、POST、GET
+
+![在这里插入图片描述](.\Java工程.assets\ES增删改查)
+**中文分词**
+
+elasticsearch本身自带的中文分词，就是单纯把中文一个字一个字的分开，根本没有词汇的概念。
+安装中文分词器ik。
+	ik(中英文分词器)有两个：
+		1 ik_smart（简易分词--最少切分）我、是、中国人
+		2 ik_max_word（尽最大可能分词--最细粒度划分）我、是、中国人、中国、人
+
+**相关性算分**
+
+	指文档与查询语句间的相关度，通过倒排索引可以获取与查询语句相匹配的文档列表
+	
+	如何将最符合用户查询需求的文档放到前列呢？
+		本质问题是一个排序的问题，排序的依据是相关性算分，确定倒排索引哪个文档排在前面
+	
+	影响相关度算分的参数：
+		1、TF(Term Frequency)：词频，即单词在文档中出现的次数，词频越高，相关度越高
+		2、Document Frequency(DF)：文档词频，即单词出现的文档数
+		3、IDF(Inverse Document Frequency)：逆向文档词频，与文档词频相反，即1/DF。
+			即单词出现的文档数越少，相关度越高（如果一个单词在文档集出现越少，算为越重要单词）
+		4、Field-length Norm：文档越短，相关度越高
+
+TF/IDE模型、BM25模型
+
+**ElasticSearch集群**
+克隆一个虚拟机做集群。--修改配置文件elasticserach.yml
+
+1、简介
+
+	一个节点(node)就是一个Elasticsearch实例，
+	而一个集群(cluster)由一个或多个节点组成，它们具有相同的cluster.name，它们协同工作，分享数据和负载。
+	当加入新的节点或者删除一个节点时，集群就会感知到并平衡数据（同步）。
+	
+	几个基本概念：
+		1、节点：一个节点就是一个es的服务器，
+			es集群中，主节点负责集群的管理和任务的分发，一般不负责文档的增删改查
+		2、片：分片是es的实际物理存储单元(一个lucene的实例)
+		3、索引：索引是es的逻辑单元，一个索引一般建立在多个不同机器的分片上
+		4、复制片：每个机器的分片一般在其他机器上会有两到三个复制片(目的是提高数据的容错率)
+		5、容错：一旦集群中的某些机器发生故障，那么剩余的机器会在主机点的管理下，重新分配资源(分片)
+		6、分片的路由：写操作(新建、删除)只在主分片上进行，然后将结果同步给复制分片
+			Sync 主分片同步给复制成功后，才返回结果给客户端
+			Async 主分片在操作成功后，在同步复制分片的同时返回成功结果给客户端
+			读操作(查询)可以在主分片或者复制分片上进行
+
+
+2、节点
+
+	1、集群中一个节点会被选举为主节点(master)
+	2、主节点临时管理集群级别的一些变更，例如新建或删除索引、增加或移除节点等。
+	3、主节点不参与文档级别的变更或搜索，这意味着在流量增长的时候，该主节点不会成为集群的瓶颈。
+	4、任何节点都可以成为主节点。
+	5、用户，我们能够与集群中的任何节点通信，包括主节点。
+	6、每一个节点都知道文档存在于哪个节点上，它们可以转发请求到相应的节点上。
+	7、我们访问的节点负责收集各节点返回的数据，最后一起返回给客户端。这一切都由Elasticsearch处理。
+
+3、集群健康
+
+	集群健康有三种状态：green、yellow或red。
+	green	所有主要分片和复制分片都可用
+	yellow	所有主要分片可用，但不是所有复制分片都可用
+	red	不是所有的主要分片都可用
+
+4、集群分片
+
+	索引只是一个用来指向一个或多个分片(shards)的“逻辑命名空间(logical namespace)”.
+	
+	分片(shard)是一个最小级别“工作单元(worker unit)”,它只是保存了索引中所有数据的一部分，是一个Lucene实例，并且它本身就是一个完整的搜索引擎。
+	文档存储在分片中，并且在分片中被索引，但应用程序不会直接与分片通信，而是直接与索引通信。
+	
+	1、主分片
+	索引中的每个文档属于一个单独的主分片，所以主分片的数量决定了索引最多能存储多少数据。
+		理论上主分片能存储的数据大小是没有限制的，限制取决于你实际的使用情况。
+		分片的最大容量完全取决于你的使用状况：硬件存储的大小、文档的大小和复杂度、如何索引和查询你的文档，以及你期望的响应时间。
+	2、副分片
+	复制分片只是主分片的一个副本，它可以防止硬件故障导致的数据丢失，
+	同时可以提供读请求，比如搜索或者从别的shard取回文档。
+	
+	当索引创建完成的时候，主分片的数量就固定了，但是复制分片的数量可以随时调整。
+
+### 3、搜索模块
+
+**1、整合es到项目**
+
+以Rest Api为主的missing client，最典型的就是jest。 
+Jest客户端可以直接使用dsl语句拼成的字符串，直接传给服务端，然后返回json字符串再解析。
+
+在search-service中引入jest和jna的pom依赖。
+在parent中将版本号纳入管理。
+spring-boot-starter-data-elasticsearch不用管理版本号，版本跟随springboot。
+
+配置文件中配置jest：spring.elasticsearch.jest.uris=http://192.168.199.129:9200
+
+**2、得到商品列表**
+
+	1、通过首页的3级分类进入，按照分类id查询对应的属性和属性值列表。
+	2、直接通过搜索栏输入文字进入，根据sku的查询结果涉及的属性值，再去查询数据库显示属性文字列表。
+
+### 实现步骤：
+**1、数据结构的准备**
+
+通过ES的mapping定义商品的数据结构：
+
+	ES的mapping定义-----基于整个库
+	MySQL数据结构字段定义------基于整个表
+
+数据结构：
+
+		1 商品名称(展示/查询)
+		2 商品价格(展示/查询)
+		3 商品图片(展示)
+		4 平台属性和属性值的列表(查询)
+		5 商品描述(展示/查询)
+		6 热度值(查询)
+		7 三级分类id(查询)
+		8 商品id
+		9 主键
+
+参数结构：
+
+	关键字(商品名称(展示/查询) 5 商品描述(展示/查询) 2 商品价格(展示/查询))
+	平台属性和属性值的列表(查询)
+	三级分类id(查询)
+
+ ![在这里插入图片描述](.\Java工程.assets\ES数据类型)
+
+代码实现：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20210324232443269.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+
+```json
+PUT gmall
+{
+ "mappings": {
+   "PmsSkuInfo":{//表名
+     "properties": {//属性
+       "id":{
+        "type": "keyword",
+        "index": true
+      },
+      "skuName":{
+        "type": "text",
+        "analyzer": "ik_max_word"
+      },
+      "skuDesc":{
+        "type": "text"
+        , "analyzer": "ik_smart"
+      },
+      "catalog3Id":{
+        "type": "keyword"
+      },
+      "price":{
+        "type": "double"
+      },
+      "skuDefaultImg":{
+        "type": "keyword",
+        "index": false
+      },
+      "hotScore":{
+        "type": "double"
+      },
+      "productId":{
+        "type": "keyword"
+      },
+      "skuAttrValueList":{
+        "properties": {
+          "attrId":{
+            "type":"keyword"
+          },
+          "valueId":{
+            "type":"keyword"
+          }
+        }
+      }
+     } 
+   }
+ } 
+}
+
+```
+
+**2、初始化项目**
+
+**搜索页面平台属性列表**
+
+平台属性列表是**从搜索结果中抽取**出来的，不是根据三级分类id查询的所有平台属性的集合
+
+- 1、**es中使用aggs聚合函数抽取平台属性**---aggs与query平级
+  对skuAttrValueList中的valueId进行聚合
+  ![在这里插入图片描述](.\Java工程.assets\20210326164701837.png)
+
+```java
+TermsBuilder groupby_attr = AggregationBuilders.terms("groupby_attr").field("skuAttrValueList.valueId");
+searchSourceBuilder.aggregation(groupby_attr);
+```
+
+- **2、使用java代码抽取平台属性**
+  - A 根据skuId去mysql中查询平台属性值的id集合(不推荐)
+  - B 直接用java集合进行处理---用set集合将不重复的属性值id抽取出来
+
+
+
+
+
 ## 补充问题：
 
 #### 前后端的跨域问题：
@@ -537,7 +858,9 @@ B该用户没有登录，并且结算请求时没有登录也可以访问，放�
 
 [技术架构演变、RPC](https://juejin.cn/post/6862646095513419783)
 
-![image-20210524105940227](./Java工程.assets/image-20210524105940227.png)
+
+
+ <img src="./Java工程.assets/image-20210524105940227.png" alt="image-20210524105940227" style="zoom:50%;" />
 
 
 
@@ -547,7 +870,7 @@ B该用户没有登录，并且结算请求时没有登录也可以访问，放�
 
 
 
-![image-20210524110500948](./Java工程.assets/image-20210524110500948.png)
+ <img src="./Java工程.assets/image-20210524110500948.png" alt="image-20210524110500948" style="zoom:50%;" />
 
 - 将系统服务层完全独立出来，并将服务层抽取为一个一个的微服务。
 - 微服务中每一个服务都对应唯一的业务能力，遵循单一原则。
@@ -1323,13 +1646,105 @@ public class Tea extends CaffeineBeverage {
 
 
 
+### 2、观察者模式 Observer
 
+**定义对象之间的一对多依赖，当一个对象状态改变时，它的所有依赖都会收到通知并自动更新状态。**
 
+主题（Subject）是被观察的对象，而其所有依赖者（Observer）称为观察者。
 
+![img](.\Java工程.assets\观察者模式)
+
+- 主题（Subject）具有注册和移除观察者、并通知所有观察者的功能，主题是通过维护一张观察者列表来实现这些操作的。
+
+- 观察者（Observer）的注册功能需要调用主题的 registerObserver() 方法。
+
+**例子：**
+
+天气数据布告板会在天气信息发生改变时更新其内容，布告板有多个，并且在将来会继续增加。
+
+```java
+public interface Subject {
+    void registerObserver(Observer o);
+    void removeObserver(Observer o);
+    void notifyObserver();
+}
+```
+
+```java
+public class WeatherData implements Subject {
+    private List<Observer> observers;
+    private float temperature;
+    private float humidity;
+    private float pressure;
+
+    public WeatherData() {
+        observers = new ArrayList<>();
+    }
+
+    public void setMeasurements(float temperature, float humidity, float pressure) {
+        this.temperature = temperature;
+        this.humidity = humidity;
+        this.pressure = pressure;
+        notifyObserver();
+    }
+
+    @Override
+    public void registerObserver(Observer o) {
+        observers.add(o);
+    }
+
+    @Override
+    public void removeObserver(Observer o) {
+        int i = observers.indexOf(o);
+        if (i >= 0) {
+            observers.remove(i);
+        }
+    }
+
+    @Override
+    public void notifyObserver() {
+        for (Observer o : observers) {
+            o.update(temperature, humidity, pressure);
+        }
+    }
+}
+```
+
+```java
+public interface Observer {
+    void update(float temp, float humidity, float pressure);
+}
+```
+
+```java
+public class StatisticsDisplay implements Observer {
+
+    public StatisticsDisplay(Subject weatherData) {
+        weatherData.registerObserver(this);
+    }
+
+    @Override
+    public void update(float temp, float humidity, float pressure) {
+        System.out.println("StatisticsDisplay.update: " + temp + " " + humidity + " " + pressure);
+    }
+}
+```
+
+```java
+public class CurrentConditionsDisplay implements Observer {
+
+    public CurrentConditionsDisplay(Subject weatherData) {
+        weatherData.registerObserver(this);
+    }
+
+    @Override
+    public void update(float temp, float humidity, float pressure) {
+        System.out.println("CurrentConditionsDisplay.update: " + temp + " " + humidity + " " + pressure);
+    }
+}
+```
 
 ## 三、结构型模式：
-
-
 
 ### 1、代理模式
 
@@ -1535,7 +1950,7 @@ Java IO使用了装饰者模式来实现。
 	FilterInputStream属于抽象装饰者，装饰者用于装饰组件，为组件提供额外的功能。
 			---例如BufferedInputStream为FileInputStream提供缓存的功能。
 
-![在这里插入图片描述](/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/20210313200551736.png)
+![在这里插入图片描述](./Java笔记.assets/20210313200551736.png)
 实例化一个具有缓存功能的字节流对象，只需要在FileInputStream对象上套一层BufferedInputStream对象
 
 ```java
@@ -1545,9 +1960,65 @@ BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStrea
 
 DataInputStream 装饰者提供了对更多数据类型进行输入的操作，比如 int、double 等基本类型。
 
-## 
+### 3、适配器模式 Adapter
+
+**把一个类接口转换成另一个用户需要的接口。**
+
+![img](.\Java工程.assets\适配器模式)
 
 
+
+**例子：**
+
+鸭子（Duck）和火鸡（Turkey）拥有不同的叫声，Duck 的叫声调用 quack() 方法，而 Turkey 调用 gobble() 方法。
+
+要求将 Turkey 的 gobble() 方法适配成 Duck 的 quack() 方法，从而让火鸡冒充鸭子！
+
+```java
+public interface Duck {
+    void quack();
+}
+```
+
+```java
+public interface Turkey {
+    void gobble();
+}
+```
+
+```java
+public class WildTurkey implements Turkey {
+    @Override
+    public void gobble() {
+        System.out.println("gobble!");
+    }
+}
+```
+
+```java
+public class TurkeyAdapter implements Duck {
+    Turkey turkey;
+
+    public TurkeyAdapter(Turkey turkey) {
+        this.turkey = turkey;
+    }
+
+    @Override
+    public void quack() {
+        turkey.gobble();
+    }
+}
+```
+
+```java
+public class Client {
+    public static void main(String[] args) {
+        Turkey turkey = new WildTurkey();
+        Duck duck = new TurkeyAdapter(turkey);
+        duck.quack();
+    }
+}
+```
 
 # --------------------------------------------------------------------------———————————————————————————————  
 
@@ -1578,7 +2049,7 @@ Spring框架一般指Spring FrameWork，是很多模块的集合，使用这些�
 
 
 
-![](Java工程.assets/Spring主要模块-1619579705857.png)
+ ![](Java工程.assets/Spring主要模块-1619579705857.png)
 
 
 
@@ -1603,23 +2074,23 @@ Spring框架一般指Spring FrameWork，是很多模块的集合，使用这些�
 
 **`Controller` 返回一个页面**
 
-单独使用 `@Controller` 不加 `@ResponseBody`的话一般使用在要返回一个视图的情况，这种情况属于比较传统的Spring MVC 的应用，对应于前后端不分离的情况。
+单独使用 `@Controller` **不加 `@ResponseBody`的话一般使用在要返回一个视图的情况**，这种情况属于比较传统的Spring MVC 的应用，对应于**前后端不分离的情况。**
 
-![SpringMVC 传统工作流程](Java工程.assets/SpringMVC传统工作流程-1619579709131.png)
+ ![SpringMVC 传统工作流程](Java工程.assets/SpringMVC传统工作流程-1619579709131.png)
 
 **`@RestController` 返回JSON 或 XML 形式数据**
 
 但`@RestController`只返回对象，对象数据直接以 JSON 或 XML 形式写入 HTTP 响应(Response)中，这种情况属于 RESTful Web服务，这也是目前日常开发所接触的最常用的情况（前后端分离）。
 
-![SpringMVC+RestController](Java工程.assets/SpringMVCRestController-1619579711245.png)
+ ![SpringMVC+RestController](Java工程.assets/SpringMVCRestController-1619579711245.png)
 
-**`@Controller +@ResponseBody` 返回 JSON  或 XML 形式数据**
+**`@Controller + @ResponseBody` 返回 JSON  或 XML 形式数据**
 
 如果你需要在Spring4之前开发 RESTful Web服务的话，你需要使用`@Controller` 并结合`@ResponseBody`注解，也就是说`@Controller` +`@ResponseBody`= `@RestController`（Spring 4 之后新加的注解）。
 
 > `@ResponseBody` 注解的作用是将 `Controller` 的方法返回的对象通过适当的转换器转换为指定的格式之后，写入到HTTP 响应(Response)对象的 body 中，通常用来返回 JSON 或者 XML 数据，返回 JSON 数据的情况比较多。
 
-![Spring3.xMVC RESTfulWeb服务工作流程](Java工程.assets/Spring3.xMVCRESTfulWeb服务工作流程-1619579713249.png)
+ ![Spring3.xMVC RESTfulWeb服务工作流程](Java工程.assets/Spring3.xMVCRESTfulWeb服务工作流程-1619579713249.png)
 
 
 
@@ -1644,6 +2115,10 @@ Spring 时代我们一般通过 XML 文件来配置 Bean，后来开发人员觉
 **Spring IoC的初始化过程：**
 
 ![Spring IoC的初始化过程](Java工程.assets/SpringIOC初始化过程-1619579715608.png)
+
+
+
+**DI(Dependecy Inject,依赖注入)是实现控制反转的一种设计模式，依赖注入就是将实例变量传入到一个对象中去。**
 
 
 
@@ -1764,8 +2239,6 @@ public OneService getService(status) {
 
 https://www.cnblogs.com/zrtqsk/p/3735273.html
 
-
-
 - Bean 容器找到配置文件中 Spring Bean 的定义。
 - Bean 容器利用 Java Reflection API 创建一个Bean的实例。
 - 如果涉及到一些属性值 利用 `set()`方法设置一些属性值。
@@ -1785,7 +2258,7 @@ https://www.cnblogs.com/zrtqsk/p/3735273.html
 
 与之比较类似的中文版本:
 
-![Spring Bean 生命周期](Java工程.assets/5496407-1619579724695.jpg)
+ ![Spring Bean 生命周期](Java工程.assets/5496407-1619579724695.jpg)
 
 
 
@@ -1793,7 +2266,7 @@ https://www.cnblogs.com/zrtqsk/p/3735273.html
 
 ## 7、Spring MVC
 
-- **Model2 时代** ：学过 Servlet 并做过相关 Demo 的朋友应该了解“Java Bean(Model)+ JSP（View,）+Servlet（Controller） ”这种开发模式,这就是早期的 JavaWeb MVC 开发模式。Model:系统涉及的数据，也就是 dao 和 bean。View：展示模型中的数据，只是用来展示。Controller：处理用户请求都发送给 ，返回数据给 JSP 并展示给用户。
+**Model2 时代** ：学过 Servlet 并做过相关 Demo 的朋友应该了解“Java Bean(Model)+ JSP（View,）+Servlet（Controller） ”这种开发模式,这就是早期的 JavaWeb MVC 开发模式。Model:系统涉及的数据，也就是 dao 和 bean。View：展示模型中的数据，只是用来展示。Controller：处理用户请求都发送给 ，返回数据给 JSP 并展示给用户。
 
 Model2 模式下还存在很多问题，Model2的抽象和封装程度还远远不够，使用Model2进行开发时不可避免地会重复造轮子，这就大大降低了程序的可维护性和复用性。于是很多JavaWeb开发相关的 MVC 框架应运而生比如Struts2，但是 Struts2 比较笨重。随着 Spring 轻量级开发框架的流行，Spring 生态圈出现了 Spring MVC 框架， Spring MVC 是当前最优秀的 MVC 框架。相比于 Struts2 ， Spring MVC 使用更加简单和方便，开发效率更高，并且 Spring MVC 运行速度更快。
 
@@ -1801,7 +2274,7 @@ MVC 是一种设计模式,Spring MVC 是一款很优秀的 MVC 框架。Spring M
 
 **Spring MVC 的简单原理图如下：**
 
-![img](Java工程.assets/60679444-1619579728162.jpg)
+ ![img](Java工程.assets/60679444-1619579728162.jpg)
 
 
 
@@ -1825,8 +2298,6 @@ MVC 是一种设计模式,Spring MVC 是一款很优秀的 MVC 框架。Spring M
 ## 8、Spring框架中的设计模式：
 
 文章：[《面试官:“谈谈Spring中都用到了那些设计模式?”。》](https://mp.weixin.qq.com/s?__biz=Mzg2OTA0Njk0OA==&mid=2247485303&idx=1&sn=9e4626a1e3f001f9b0d84a6fa0cff04a&chksm=cea248bcf9d5c1aaf48b67cc52bac74eb29d6037848d6cf213b0e5466f2d1fda970db700ba41&token=255050878&lang=zh_CN#rd)
-
-
 
 - **工厂设计模式** : Spring使用工厂模式通过 `BeanFactory`、`ApplicationContext` 创建 bean 对象。
 - **代理设计模式** : Spring AOP 功能的实现。
