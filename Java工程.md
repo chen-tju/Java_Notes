@@ -2104,13 +2104,23 @@ https://www.zhihu.com/question/23277575/answer/169698662
 
 源码：https://javadoop.com/post/spring-ioc
 
-IoC（Inverse of Control:控制反转）是一种**设计思想**，就是 **将原本在程序中手动创建对象的控制权，交由Spring框架来管理。** IoC 在其他语言中也有应用，并非 Spring 特有。 **IoC 容器是 Spring 用来实现 IoC 的载体， IoC 容器实际上就是个Map（key，value）,Map 中存放的是各种对象。**
+**IoC**（**Inverse of Control:控制反转**）是一种**设计思想**，就是 **将原本在程序中手动创建对象的控制权，交由Spring框架来管理。** IoC 在其他语言中也有应用，并非 Spring 特有。
+
+ **IoC 容器是 Spring 用来实现 IoC 的载体， IoC 容器实际上就是个Map（key，value）,Map 中存放的是各种对象。**
 
 将**对象之间的相互依赖关系**交给 **IoC 容器**来管理，并**由 IoC 容器完成对象的注入**。
 
+ ![ioc-patterns](./Java工程.assets/ioc-patterns.png)
+
 这样可以很大程度上简化应用的开发，把应用从复杂的依赖关系中解放出来。 **IoC 容器就像是一个工厂一样，当我们需要创建一个对象的时候，只需要配置好配置文件/注解即可，完全不用考虑对象是如何被创建出来的。** 在实际项目中一个 Service 类可能有几百甚至上千个类作为它的底层，假如我们需要实例化这个 Service，你可能要每次都要搞清这个 Service 所有底层类的构造函数，这可能会把人逼疯。如果利用 IoC 的话，你只需要配置好，然后在需要的地方引用就行了，这大大增加了项目的可维护性且降低了开发难度。
 
-Spring 时代我们一般通过 XML 文件来配置 Bean，后来开发人员觉得 XML 文件来配置不太好，于是 SpringBoot 注解配置就慢慢开始流行起来。
+**控制反转怎么理解呢?** 举个例子："对象a 依赖了对象 b，当对象 a 需要使用 对象 b的时候必须自己去创建。但是当系统引入了 IOC 容器后， 对象a 和对象 b 之前就失去了直接的联系。这个时候，当对象 a 需要使用 对象 b的时候， 我们可以指定 IOC 容器去创建一个对象b注入到对象 a 中"。 对象 a 获得依赖对象 b 的过程,由主动行为变为了被动行为，控制权反转，这就是控制反转名字的由来。
+
+ ![img](./Java工程.assets/IOC.png)
+
+
+
+**Spring** 时代我们一般通过 **XML** 文件来配置 Bean，后来开发人员觉得 XML 文件来配置不太好，于是 **SpringBoot 注解配置**就慢慢开始流行起来。
 
 **Spring IoC的初始化过程：**
 
@@ -2118,7 +2128,85 @@ Spring 时代我们一般通过 XML 文件来配置 Bean，后来开发人员觉
 
 
 
+### DI 依赖注入
+
 **DI(Dependecy Inject,依赖注入)是实现控制反转的一种设计模式，依赖注入就是将实例变量传入到一个对象中去。**
+
+```java
+// 在类Human中用到一个Father对象，可以说类Human依赖于类Father
+public class Human {
+    ...
+    Father father;
+    ...
+    public Human() {
+        father = new Father();
+    }
+}
+/*
+存在问题：
+	1、如果现在要改变 father 生成方式，如需要用new Father(String name)初始化 father，需要修改 Human 代码；
+	2、如果想测试不同 Father 对象对 Human 的影响很困难，因为 father 的初始化被写死在了 Human 的构造函数中；
+	3、如果new Father()过程非常缓慢，单测时我们希望用已经初始化好的 father 对象 Mock 掉这个过程也很困难。  
+*/
+
+// 将Father对象作为构造函数的一个参数传入，在调用 Human 的构造方法之前外部就已经初始化好了 Father 对象
+public class Human {
+    ...
+    Father father;
+    ...
+    public Human(Father father) {
+        this.father = father;
+    }
+}
+```
+
+**像这种非自己主动初始化依赖，而通过外部来传入依赖的方式，我们就称为依赖注入。**
+依赖注入主要有两个好处：
+
+1. 解耦，将依赖之间解耦。
+2. 因为已经解耦，所以方便做单元测试，尤其是 Mock 测试。
+
+
+
+**Spring中的依赖注入：**
+
+依赖注入是实现控制反转的一种方式。
+
+```kotlin
+class MovieLister...
+    private MovieFinder finder;
+    public void setFinder(MovieFinder finder) {
+        this.finder = finder;
+    }
+
+class ColonMovieFinder...
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+```
+
+上面定义的两个类，都使用了依赖注入的方式，**通过外部传入依赖，而不是自己创建依赖。**那么问题来了，谁把依赖传给他们，也就是说谁负责创建finder，并且把finder传给MovieLister。答案是**Spring的IoC容器。**
+
+要使用IoC容器，首先要进行配置。这里我们使用xml的配置，也可以通过代码注解方式配置。下面是spring.xml的内容
+
+```xml
+<beans>
+    <bean id="MovieLister" class="spring.MovieLister">
+        <property name="finder">
+            <ref local="MovieFinder"/>
+        </property>
+    </bean>
+    <bean id="MovieFinder" class="spring.ColonMovieFinder">
+        <property name="filename">
+            <value>movies1.txt</value>
+        </property>
+    </bean>
+</beans>
+```
+
+在Spring中，每个bean代表一个对象的实例，默认是单例模式，即在程序的生命周期内，所有的对象都只有一个实例，进行重复使用。通过配置bean，IoC容器在启动的时候会根据配置生成bean实例。这里只要知道IoC容器会根据配置创建MovieFinder，在运行的时候把MovieFinder赋值给MovieLister的finder属性，完成依赖注入的过程。
+
+
 
 
 
@@ -2126,7 +2214,7 @@ Spring 时代我们一般通过 XML 文件来配置 Bean，后来开发人员觉
 
 
 
-AOP(Aspect-Oriented Programming:面向切面编程)
+**AOP(Aspect-Oriented Programming:面向切面编程)**
 
 能够将那些与业务无关，**却为业务模块所共同调用的逻辑或责任（例如事务处理、日志管理、权限控制等）封装起来**，便于**减少系统的重复代码**，**降低模块间的耦合度**，并**有利于未来的可拓展性和可维护性**。
 
@@ -2134,15 +2222,13 @@ AOP(Aspect-Oriented Programming:面向切面编程)
 
 ![SpringAOPProcess](Java工程.assets/SpringAOPProcess-1619579717541.jpg)
 
-当然你也可以使用 AspectJ ,Spring AOP 已经集成了AspectJ ，AspectJ 应该算的上是 Java 生态系统中最完整的 AOP 框架了。
+当然你也可以使用 AspectJ ,Spring AOP 已经集成了AspectJ ，**AspectJ 应该算的上是 Java 生态系统中最完整的 AOP 框架**了。
 
-使用 AOP 之后我们可以把一些通用功能抽象出来，在需要用到的地方直接使用即可，这样大大简化了代码量。我们需要增加新功能时也方便，这样也提高了系统扩展性。日志功能、事务管理等等场景都用到了 AOP 。
-
-
-
-#### Spring AOP和AspectJ AOP的区别：
+**使用 AOP 之后我们可以把一些通用功能抽象出来，在需要用到的地方直接使用即可**，这样大大简化了代码量。我们需要增加新功能时也方便，这样也提高了系统扩展性。日志功能、事务管理等等场景都用到了 AOP 。
 
 
+
+#### 面试题：Spring AOP和AspectJ AOP的区别：
 
 **Spring AOP 属于运行时增强，而 AspectJ 是编译时增强。** Spring AOP 基于代理(Proxying)，而 AspectJ 基于字节码操作(Bytecode Manipulation)。
 
@@ -2299,13 +2385,60 @@ MVC 是一种设计模式,Spring MVC 是一款很优秀的 MVC 框架。Spring M
 
 文章：[《面试官:“谈谈Spring中都用到了那些设计模式?”。》](https://mp.weixin.qq.com/s?__biz=Mzg2OTA0Njk0OA==&mid=2247485303&idx=1&sn=9e4626a1e3f001f9b0d84a6fa0cff04a&chksm=cea248bcf9d5c1aaf48b67cc52bac74eb29d6037848d6cf213b0e5466f2d1fda970db700ba41&token=255050878&lang=zh_CN#rd)
 
-- **工厂设计模式** : Spring使用工厂模式通过 `BeanFactory`、`ApplicationContext` 创建 bean 对象。
-- **代理设计模式** : Spring AOP 功能的实现。
-- **单例设计模式** : Spring 中的 Bean 默认都是单例的。
-- **模板方法模式** : Spring 中 `jdbcTemplate`、`hibernateTemplate` 等以 Template 结尾的对数据库操作的类，它们就使用到了模板模式。
-- **包装器设计模式** : 我们的项目需要连接多个数据库，而且不同的客户在每次访问中根据需要会去访问不同的数据库。这种模式让我们可以根据客户的需求能够动态切换不同的数据源。
-- **观察者模式:** Spring 事件驱动模型就是观察者模式很经典的一个应用。
-- **适配器模式** :Spring AOP 的增强或通知(Advice)使用到了适配器模式、spring MVC 中也是用到了适配器模式适配`Controller`。
+- **1、工厂模式** : **Spring使用工厂模式通过 `BeanFactory`、`ApplicationContext` 创建 bean 对象。**
+
+  - `BeanFactory` ：延迟注入(使用到某个 bean 的时候才会注入),相比于`ApplicationContext` 来说会占用更少的内存，程序启动速度更快。
+  - `ApplicationContext` ：容器启动的时候，不管你用没用到，一次性创建所有 bean 。`BeanFactory` 仅提供了最基本的依赖注入支持，` ApplicationContext` 扩展了 `BeanFactory` ,除了有`BeanFactory`的功能还有额外更多功能，所以一般开发人员使用` ApplicationContext`会更多。`ApplicationContext` 有三个实现类：
+    - `ClassPathXmlApplication`：把上下文文件当成类路径资源。
+    - `FileSystemXmlApplication`：从文件系统中的 XML 文件载入上下文定义信息。
+    - `XmlWebApplicationContext`：从Web系统中的XML文件载入上下文定义信息。
+
+- **2、代理模式** : **Spring AOP 功能的实现**。
+
+  - AOP面向切面编程能将与业务无关却为业务模块共同调用的逻辑或责任封装起来，减少系统的重复代码，降低模块间耦合度；
+  - Spring AOP基于动态代理，如果要代理的对象，实现了某个接口，那么Spring AOP会使用**JDK Proxy**，去创建代理对象，而对于没有实现接口的对象，就无法使用 JDK Proxy 去进行代理了，这时候Spring AOP会使用**Cglib** ，这时候Spring AOP会使用 **Cglib** 生成一个被代理对象的子类来作为代理。
+
+- **3、单例模式** : **Spring 中的 Bean 默认都是单例的**。
+
+  - 在系统中，有些只需要一个的对象，如线程池、缓存、对话框、注册表等；这一类对象只能有一个实例。
+  - 好处：1、对于频繁使用的对象，可以省略创建对象花费的时间；2、new的次数减少，对系统内存使用频率降低，减轻GC压力，缩短GC停顿时间。
+  - Spring中实现单例的方式：
+    - xml : `<bean id="userService" class="top.snailclimb.UserService" scope="singleton"/>`
+    - 注解：`@Scope(value = "singleton")`
+    - **Spring 通过 `ConcurrentHashMap` 实现单例注册表的特殊方式实现单例模式。**
+  - Spring中bean的默认作用域是singleton(单例)的。此外，Spring中bean还有以下作用域：
+    - prototype：每次请求都会创建一个新的bean实例；
+    - request：每一次HTTP请求都会产生一个新的bean，该bean仅在当前HTTP request内有效；
+    - session：每一次HTTP请求都会产生一个新的 bean，该bean仅在当前 HTTP session 内有效；
+    - global-session：全局session作用域，仅仅在基于portlet的web应用中才有意义。
+
+- **4、模板方法模式** : Spring 中 **`jdbcTemplate`、`hibernateTemplate` 等**以 Template 结尾的对数据库操作的类，它们就使用到了模板模式。Spring没有使用继承的方式实现模板模式，而是使用了Callback模式与模板方法模式配合。
+
+  - 模板方法模式定义一个操作中的算法的骨架，而将一些步骤延迟到子类中。 模板方法使得子类可以不改变一个算法的结构即可重定义该算法的某些特定步骤的实现方式。
+
+- **5、装饰者模式** : Spring 中配置 DataSource 的时候，DataSource 可能是不同的数据库和数据源。项目需要连接多个数据库，而且不同的客户在每次访问中根据需要会去访问不同的数据库。这种模式让我们可以根据客户的需求能够动态切换不同的数据源。
+
+  - 装饰者模式可以动态地给对象添加一些额外的属性或行为。相比于使用继承，装饰者模式更加灵活。
+  - Spring 中用到的包装器模式在类名上含有 `Wrapper`或者 `Decorator`。
+
+- **6、适配器模式** :**Spring AOP 的增强或通知(Advice)使用到了适配器模式、spring MVC 中也是用到了适配器模式适配`Controller`。**
+
+  - 适配器模式可以将一个接口转换成一个需要的另一个接口，使不兼容的类可以一起工作。
+
+  - Spring AOP 的增强或通知(Advice)使用到了适配器模式，与之相关的接口是`AdvisorAdapter ` 。Advice 常用的类型有：`BeforeAdvice`（目标方法调用前,前置通知）、`AfterAdvice`（目标方法调用后,后置通知）、`AfterReturningAdvice`(目标方法执行结束后，return之前)等等。每个类型Advice（通知）都有对应的拦截器: `MethodBeforeAdviceInterceptor`、 `AfterReturningAdviceAdapter`、`AfterReturningAdviceInterceptor`。Spring预定义的通知要通过对应的适配器，适配成 `MethodInterceptor`接口(方法拦截器)类型的对象（如：`MethodBeforeAdviceInterceptor` 负责适配 `MethodBeforeAdvice`）
+
+  - 在Spring MVC中，`DispatcherServlet` 根据请求信息调用 `HandlerMapping`，解析请求对应的 `Handler`。解析到对应的 `Handler`（也就是我们平常说的 `Controller` 控制器）后，开始由`HandlerAdapter` 适配器处理。`HandlerAdapter` 作为期望接口，具体的适配器实现类用于对目标类进行适配，`Controller` 作为需要适配的类。
+
+    **为什么要在 Spring MVC 中使用适配器模式？** Spring MVC 中的 `Controller` 种类众多，不同类型的 `Controller` 通过不同的方法来对请求进行处理。如果不利用适配器模式的话，`DispatcherServlet` 直接获取对应类型的 `Controller`，需要自行判断
+
+- **7、观察者模式:** Spring 事件驱动模型就是观察者模式很经典的一个应用。
+
+  - 观察者模式表示一种对象与对象之间具有依赖关系，当一个对象发生改变时，对象所依赖的对象也会做出反应。
+  - 事件驱动模式的三种角色：`ApplicationEvent` 充当事件角色；`ApplicationListener` 充当了事件监听者角色； `ApplicationEventPublisher`  充当了事件发布者角色。
+  - Spring的事件流程：
+    - 1、定义一个事件: 实现一个继承自 `ApplicationEvent`，并且写相应的构造函数；
+    - 2、定义一个事件监听者：实现 `ApplicationListener` 接口，重写 `onApplicationEvent()` 方法；
+    - 3、使用事件发布者发布消息: 可以通过 `ApplicationEventPublisher  ` 的 `publishEvent()` 方法发布消息。
 
 
 
