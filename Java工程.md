@@ -2037,11 +2037,28 @@ Spring框架一般指Spring FrameWork，是很多模块的集合，使用这些�
 **Spring 的 6 个特征:**
 
 - **核心技术** ：依赖注入(DI)，AOP，事件(events)，资源，i18n，验证，数据绑定，类型转换，SpEL。
+
 - **测试** ：模拟对象，TestContext框架，Spring MVC 测试，WebTestClient。
+
 - **数据访问** ：事务，DAO支持，JDBC，ORM，编组XML。
+
 - **Web支持** : Spring MVC和Spring WebFlux Web框架。
+
 - **集成** ：远程处理，JMS，JCA，JMX，电子邮件，任务，调度，缓存。
+
 - **语言** ：Kotlin，Groovy，动态语言。
+
+  
+
+#### **Spring的优良特性：**
+
+- 非侵入式：基于Spring开发的应用中的对象可以不依赖于Spring的API
+- 控制反转：IOC——Inversion of Control，指的是将对象的创建权交给 Spring 去创建。使用 Spring 之前，对象的创建都是由我们自己在代码中new创建。而使用 Spring 之后。对象的创建都是给了 Spring 框架。
+- 依赖注入：DI——Dependency Injection，是指依赖的对象不需要手动调用 setXX 方法去设置，而是通过配置赋值。
+- 面向切面编程：Aspect Oriented Programming——AOP
+- 容器：Spring 是一个容器，因为它包含并且管理应用对象的生命周期
+- 组件化：Spring 实现了使用简单的组件配置组合成一个复杂的应用。在 Spring 中可以使用XML和Java注解组合这些对象。
+- 一站式：在 IOC 和 AOP 的基础上可以整合各种企业应用的开源框架和优秀的第三方类库（实际上 Spring 自身也提供了表现层的 SpringMVC 和持久层的 Spring JDBC）
 
 
 
@@ -2098,13 +2115,21 @@ Spring框架一般指Spring FrameWork，是很多模块的集合，使用这些�
 
 
 
-## 4、IOC控制翻转
+## 4、IOC
 
 https://www.zhihu.com/question/23277575/answer/169698662
 
 源码：https://javadoop.com/post/spring-ioc
 
 **IoC**（**Inverse of Control:控制反转**）是一种**设计思想**，就是 **将原本在程序中手动创建对象的控制权，交由Spring框架来管理。** IoC 在其他语言中也有应用，并非 Spring 特有。
+
+**控制反转怎么理解呢?** 举个例子："对象a 依赖了对象 b，当对象 a 需要使用 对象 b的时候必须自己去创建。但是当系统引入了 IOC 容器后， 对象a 和对象 b 之前就失去了直接的联系。这个时候，当对象 a 需要使用 对象 b的时候， 我们可以指定 IOC 容器去创建一个对象b注入到对象 a 中"。 对象 a 获得依赖对象 b 的过程,由主动行为变为了被动行为，控制权反转，这就是控制反转名字的由来。
+
+ ![img](./Java工程.assets/IOC.png)
+
+
+
+### IOC容器
 
  **IoC 容器是 Spring 用来实现 IoC 的载体， IoC 容器实际上就是个Map（key，value）,Map 中存放的是各种对象。**
 
@@ -2114,11 +2139,19 @@ https://www.zhihu.com/question/23277575/answer/169698662
 
 这样可以很大程度上简化应用的开发，把应用从复杂的依赖关系中解放出来。 **IoC 容器就像是一个工厂一样，当我们需要创建一个对象的时候，只需要配置好配置文件/注解即可，完全不用考虑对象是如何被创建出来的。** 在实际项目中一个 Service 类可能有几百甚至上千个类作为它的底层，假如我们需要实例化这个 Service，你可能要每次都要搞清这个 Service 所有底层类的构造函数，这可能会把人逼疯。如果利用 IoC 的话，你只需要配置好，然后在需要的地方引用就行了，这大大增加了项目的可维护性且降低了开发难度。
 
-**控制反转怎么理解呢?** 举个例子："对象a 依赖了对象 b，当对象 a 需要使用 对象 b的时候必须自己去创建。但是当系统引入了 IOC 容器后， 对象a 和对象 b 之前就失去了直接的联系。这个时候，当对象 a 需要使用 对象 b的时候， 我们可以指定 IOC 容器去创建一个对象b注入到对象 a 中"。 对象 a 获得依赖对象 b 的过程,由主动行为变为了被动行为，控制权反转，这就是控制反转名字的由来。
+**Spring提供了两种类型的容器，使用工厂模式通过 `BeanFactory`、`ApplicationContext` 创建 bean 对象。**
 
- ![img](./Java工程.assets/IOC.png)
+- `BeanFactory` ：延迟注入(使用到某个 bean 的时候才会注入),相比于`ApplicationContext` 来说会占用更少的内存，程序启动速度更快。——是一个最简单的容器，主要功能是为DI提供支持。
 
+- `ApplicationContext` ：容器启动的时候，不管你用没用到，一次性创建所有 bean 。`BeanFactory` 仅提供了最基本的依赖注入支持，` ApplicationContext` 扩展了 `BeanFactory` ,除了有`BeanFactory`的功能还有额外更多功能，所以一般开发人员使用` ApplicationContext`会更多。`ApplicationContext` 有三个实现类：
 
+  - `ClassPathXmlApplication`：把上下文文件当成类路径资源。
+
+  - `FileSystemXmlApplication`：从文件系统中的 XML 文件载入上下文定义信息。
+
+  - `XmlWebApplicationContext`：从Web系统中的XML文件载入上下文定义信息。
+
+    
 
 **Spring** 时代我们一般通过 **XML** 文件来配置 Bean，后来开发人员觉得 XML 文件来配置不太好，于是 **SpringBoot 注解配置**就慢慢开始流行起来。
 
@@ -2128,9 +2161,11 @@ https://www.zhihu.com/question/23277575/answer/169698662
 
 
 
-### DI 依赖注入
+## 5、DI 
 
 **DI(Dependecy Inject,依赖注入)是实现控制反转的一种设计模式，依赖注入就是将实例变量传入到一个对象中去。**
+
+通过依赖注入的方式管理Bean之间的依赖关系。
 
 ```java
 // 在类Human中用到一个Father对象，可以说类Human依赖于类Father
@@ -2208,9 +2243,87 @@ class ColonMovieFinder...
 
 
 
+### 基于构造函数、基于设值函数的依赖注入
+
+基于构造函数注入和基于设值函数注入中的 Beans.xml 文件的唯一的区别就是在：
+
+- 基于构造函数注入中，我们使用的是〈bean〉标签中的〈constructor-arg〉元素，
+- 而在基于设值函数的注入中，我们使用的是〈bean〉标签中的〈property〉元素。
+
+第二个你需要注意的点是，
+
+- 如果你要把一个引用传递给一个对象，那么你需要使用 标签的 **ref** 属性，
+- 而如果你要直接传递一个值，那么你应该使用 **value** 属性。
+
+**inner beans** 是在其他 bean 的范围内定义的 bean。
+
+因此<property />或<constructor-arg />元素中的<bean />元素称为内部bean
 
 
-## 5、AOP面向切面编程
+
+### 自动装配模式
+
+可以使用`<bean>`元素的 **autowire** 属性为一个 bean 定义指定自动装配模式。
+
+| 模式                                                         | 描述                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| no                                                           | 默认的设置，意味着没有自动装配，应该使用显式的bean引用来连线。 |
+| [byName](https://www.w3cschool.cn/wkspring/fwdz1mmb.html)    | 由属性名自动装配。Spring 容器看到在 XML 配置文件中 bean 的自动装配的属性设置为 byName。然后尝试匹配，并且将它的属性与在配置文件中被定义为相同名称的 beans 的属性进行连接。 |
+| [byType](https://www.w3cschool.cn/wkspring/8dhy1mmd.html)    | 由属性数据类型自动装配。Spring 容器看到在 XML 配置文件中 bean 的自动装配的属性设置为 byType。然后如果它的**类型**匹配配置文件中的一个确切的 bean 名称，它将尝试匹配和连接属性的类型。如果存在不止一个这样的 bean，则一个致命的异常将会被抛出。 |
+| [constructor](https://www.w3cschool.cn/wkspring/jtlb1mmf.html) | 类似于 byType，但该类型适用于构造函数参数类型。如果在容器中没有一个构造函数参数类型的 bean，则一个致命错误将会发生。 |
+
+
+
+
+
+### 基于注解配置依赖注入
+
+- **@Required** 注解应用于 bean 属性的 setter 方法，它表明受影响的 bean 属性在配置时必须放在 XML 配置文件中，否则容器就会抛出一个 BeanInitializationException 异常。      <property name="name"  value="Zara" /> 
+
+- **@Autowired** 注解可以应用到 bean 属性的 setter 方法，非 setter 方法，构造函数和属性。
+
+  **自动注入一个定义好的bean。**是一个用于容器配置的注释。
+
+- **@Qualifier** 注解通过指定确切的将被连线的 bean，配合autowired消除混乱。
+
+  （当创建了多个具有相同类型的bean时，想要用一个属性只为它们其中的一个进行装配）
+
+- **JSR-250** 注释，它包括 @PostConstruct， @PreDestroy 和 @Resource 注释。
+
+  - 可以使用 **@PostConstruct** 注释作为初始化回调函数的一个替代，**@PreDestroy** 注释作为销毁回调函数的一个替代
+  - @Resource注解可以用到字段中或者setter方法中。@Resource 注释使用一个 ‘name’ 属性，该属性以一个 bean 名称的形式被注入。你可以说，它遵循 **by-name** 自动连接语义。
+
+
+
+Spring 基于Java的配置：
+
+- 带有 **@Configuration** 的注解类表示这个类可以使用 Spring IoC 容器作为 bean 定义的来源。
+
+- **@Bean** 注解告诉 Spring，一个带有 @Bean 的注解方法将返回一个对象，该对象应该被注册为在 Spring 应用程序上下文中bean。
+
+  @Bean 注解支持指定任意的初始化和销毁的回调方法，就像在 bean 元素中 Spring 的 XML 的初始化方法和销毁方法的属性：
+
+- **@Import** 注解允许从另一个配置类中加载 @Bean 定义，可以在另一个 Bean 声明中导入该 Bean 声明。
+
+- **@Scope**指定 Bean 的范围：默认范围是单实例，但是你可以重写带有 @Scope 注解的该方法
+
+
+
+
+
+## 6、AOP
+
+------
+
+```
+*一个程序中跨越多个点的功能被称为 **横切关注点**，这些横切关注点在概念上独立于应用程序的业务逻辑（如日志记录、声明性事务、安全性，和缓存等等）。*
+
+在 OOP 中模块化的关键单元是类，而在 AOP 中模块化的关键单元是方面。
+AOP 帮助你将横切关注点从它们所影响的对象中分离出来，然而依赖注入帮助你将你的应用程序对象从彼此中分离出来。
+IOC使原来需要我们new的对象，现在由Spring容器帮助创建管理对象；AOP使得扩展功能不需要修改原始代码。
+```
+
+------
 
 
 
@@ -2228,7 +2341,7 @@ class ColonMovieFinder...
 
 
 
-#### 面试题：Spring AOP和AspectJ AOP的区别：
+### 面试题：Spring AOP和AspectJ AOP的区别：
 
 **Spring AOP 属于运行时增强，而 AspectJ 是编译时增强。** Spring AOP 基于代理(Proxying)，而 AspectJ 基于字节码操作(Bytecode Manipulation)。
 
@@ -2238,36 +2351,44 @@ Spring AOP 已经集成了 AspectJ ，AspectJ 应该算的上是 Java 生态系�
 
 
 
-## 6、Bean
+## 7、Bean
+
+**bean是一个被实例化、组装，并通过Spring IOC容器管理的对象；是构成应用程序的支柱，由容器提供的配置元数据创建。**
+
+ ![Spring Bean](./Java工程.assets/bean与Spring容器之间的关系.png)
+
+Spring IoC 容器完全由实际编写的配置元数据的格式解耦。可使用三种方法将配置元数据提供给Spring容器：
+
+基于XML配置文件、基于注解的配置、基于Java的配置
+
+
 
 ### 1、Bean的作用域：
 
-- singleton : 唯一 bean 实例，Spring 中的 bean 默认都是单例的。
-- prototype : 每次请求都会创建一个新的 bean 实例。
-- request : 每一次HTTP请求都会产生一个新的bean，该bean仅在当前HTTP request内有效。
-- session : 每一次HTTP请求都会产生一个新的 bean，该bean仅在当前 HTTP session 内有效。
-- global-session： 全局session作用域，仅仅在基于portlet的web应用中才有意义，Spring5已经没有了。Portlet是能够生成语义代码(例如：HTML)片段的小型Java Web插件。它们基于portlet容器，可以像servlet一样处理HTTP请求。但是，与 servlet 不同，每个 portlet 都有不同的会话
+- **singleton** : 在IOC容器中存在的唯一 bean 实例，Spring 中的 bean 默认都是单例的。
+- **prototype** : 每次请求都会创建一个新的 bean 实例；每次调用getBean()相当于执行newXxBean()。
+- **request** : 每一次HTTP请求都会产生一个新的bean，该bean仅在当前HTTP request内有效。
+- **session** : 每一次HTTP请求都会产生一个新的 bean，该bean仅在当前 HTTP session 内有效。
+- **global-session**： 全局session作用域，仅仅在基于portlet的web应用中才有意义，Spring5已经没有了。Portlet是能够生成语义代码(例如：HTML)片段的小型Java Web插件。它们基于portlet容器，可以像servlet一样处理HTTP请求。但是，与 servlet 不同，每个 portlet 都有不同的会话
 
 
 
 ### 2、单例Bean存在安全问题吗？
 
+的确是存在安全问题的。因为，当**多个线程操作同一个对象的时候**，**对这个对象的成员变量的写操作**会存在线程安全问题。
 
+但是，一般情况下，我们常用的 `Controller`、`Service`、`Dao` 这些 Bean 是无状态的。**无状态的 Bean 不能保存数据，因此是线程安全的。**
 
-的确是存在安全问题的。因为，当多个线程操作同一个对象的时候，对这个对象的成员变量的写操作会存在线程安全问题。
+**常见的有 2 种解决办法：**
 
-但是，一般情况下，我们常用的 `Controller`、`Service`、`Dao` 这些 Bean 是无状态的。无状态的 Bean 不能保存数据，因此是线程安全的。
-
-常见的有 2 种解决办法：
-
-1. 在类中定义一个 `ThreadLocal` 成员变量，将需要的可变成员变量保存在 `ThreadLocal` 中（推荐的一种方式）。
-2. 改变 Bean 的作用域为 “prototype”：每次请求都会创建一个新的 bean 实例，自然不会存在线程安全问题。
+1. 在**类中定义一个 `ThreadLocal` 成员变量**，将需要的可变成员变量保存在 `ThreadLocal` 中（推荐的一种方式）。
+2. **改变 Bean 的作用域为 “prototype”**：每次请求都会创建一个新的 bean 实例，自然不会存在线程安全问题。
 
 
 
 ### 3、@Component和@Bean的区别
 
-1. 作用对象不同: `@Component` 注解作用于类，而`@Bean`注解作用于方法。
+1. **作用对象不同**: `@Component` 注解作用于类，而`@Bean`注解作用于方法。
 2. `@Component`通常是通过类路径扫描来自动侦测以及自动装配到Spring容器中（我们可以使用 `@ComponentScan` 注解定义要扫描的路径从中找出标识了需要装配的类自动装配到 Spring 的 bean 容器中）。`@Bean` 注解通常是我们在标有该注解的方法中定义产生这个 bean,`@Bean`告诉了Spring这是某个类的示例，当我需要用它的时候还给我。
 3. `@Bean` 注解比 `Component` 注解的自定义性更强，而且很多地方我们只能通过 `@Bean` 注解来注册bean。比如当我们引用第三方库中的类需要装配到 `Spring`容器时，则只能通过 `@Bean`来实现。
 
@@ -2298,12 +2419,9 @@ public class AppConfig {
 @Bean
 public OneService getService(status) {
     case (status)  {
-        when 1:
-                return new serviceImpl1();
-        when 2:
-                return new serviceImpl2();
-        when 3:
-                return new serviceImpl3();
+        when 1: return new serviceImpl1();
+        when 2: return new serviceImpl2();
+        when 3: return new serviceImpl3();
     }
 }
 ```
@@ -2323,61 +2441,61 @@ public OneService getService(status) {
 
 ### 5、Spring中bean的生命周期：
 
-https://www.cnblogs.com/zrtqsk/p/3735273.html
+**Bean的定义——Bean的初始化——Bean的使用——Bean的销毁**
 
-- Bean 容器找到配置文件中 Spring Bean 的定义。
-- Bean 容器利用 Java Reflection API 创建一个Bean的实例。
-- 如果涉及到一些属性值 利用 `set()`方法设置一些属性值。
-- 如果 Bean 实现了 `BeanNameAware` 接口，调用 `setBeanName()`方法，传入Bean的名字。
-- 如果 Bean 实现了 `BeanClassLoaderAware` 接口，调用 `setBeanClassLoader()`方法，传入 `ClassLoader`对象的实例。
-- 与上面的类似，如果实现了其他 `*.Aware`接口，就调用相应的方法。
-- 如果有和加载这个 Bean 的 Spring 容器相关的 `BeanPostProcessor` 对象，执行`postProcessBeforeInitialization()` 方法
-- 如果Bean实现了`InitializingBean`接口，执行`afterPropertiesSet()`方法。
-- 如果 Bean 在配置文件中的定义包含 init-method 属性，执行指定的方法。
-- 如果有和加载这个 Bean的 Spring 容器相关的 `BeanPostProcessor` 对象，执行`postProcessAfterInitialization()` 方法
-- 当要销毁 Bean 的时候，如果 Bean 实现了 `DisposableBean` 接口，执行 `destroy()` 方法。
-- 当要销毁 Bean 的时候，如果 Bean 在配置文件中的定义包含 destroy-method 属性，执行指定的方法。
+1. Bean 容器找到配置文件中 Spring Bean 的定义，利用 Java Reflection API 创建一个Bean的实例。
+2. 如果涉及到一些属性值，利用 `set()`方法设置一些属性值。
+3. 如果 Bean 实现了 `BeanNameAware` 接口，调用 `setBeanName()`方法，传入Bean的名字；
 
-图示：
+   如果 Bean 实现了 `BeanClassLoaderAware` 接口，调用 `setBeanClassLoader()`方法，传入 `ClassLoader`对象的实例；
 
-![Spring Bean 生命周期](Java工程.assets/48376272-1619579722599.jpg)
+   与上面的类似，如果实现了其他 `*.Aware`接口，就调用相应的方法。
+4. 如果有和加载这个 Bean 的 Spring 容器相关的 `BeanPostProcessor` 对象，执行`postProcessBeforeInitialization()` 方法
+5. 如果Bean实现了`InitializingBean`接口，执行`afterPropertiesSet()`方法。
+6. 如果 Bean 在配置文件中的定义包含 init-method 属性，执行指定的方法。
+7. 如果有和加载这个 Bean的 Spring 容器相关的 `BeanPostProcessor` 对象，执行`postProcessAfterInitialization()` 方法
+8. 当要销毁 Bean 的时候，如果 Bean 实现了 `DisposableBean` 接口，执行 `destroy()` 方法。
+9. 当要销毁 Bean 的时候，如果 Bean 在配置文件中的定义包含 destroy-method 属性，执行指定的方法。
 
-与之比较类似的中文版本:
+（建议不要使用 InitializingBean 或者 DisposableBean 的回调方法，因为 XML 配置在命名方法上更加灵活。）
+
+**图示：**
 
  ![Spring Bean 生命周期](Java工程.assets/5496407-1619579724695.jpg)
 
 
 
+### 6、Bean 后置处理器
 
+**Bean 后置处理器允许在调用初始化方法前后对 Bean 进行额外的处理。**
 
-## 7、Spring MVC
+`BeanPostProcessor `接口定义回调方法，你可以实现该方法来提供自己的实例化逻辑，依赖解析逻辑等。你也可以在 `Spring` 容器通过插入一个或多个 `BeanPostProcessor` 的实现来完成实例化，配置和初始化一个`bean`之后实现一些自定义逻辑回调方法。
 
-**Model2 时代** ：学过 Servlet 并做过相关 Demo 的朋友应该了解“Java Bean(Model)+ JSP（View,）+Servlet（Controller） ”这种开发模式,这就是早期的 JavaWeb MVC 开发模式。Model:系统涉及的数据，也就是 dao 和 bean。View：展示模型中的数据，只是用来展示。Controller：处理用户请求都发送给 ，返回数据给 JSP 并展示给用户。
+你可以配置多个 `BeanPostProcessor `接口，通过设置 `BeanPostProcessor `实现的` Ordered `接口提供的` order` 属性来控制这些` BeanPostProcessor` 接口的执行顺序。
 
-Model2 模式下还存在很多问题，Model2的抽象和封装程度还远远不够，使用Model2进行开发时不可避免地会重复造轮子，这就大大降低了程序的可维护性和复用性。于是很多JavaWeb开发相关的 MVC 框架应运而生比如Struts2，但是 Struts2 比较笨重。随着 Spring 轻量级开发框架的流行，Spring 生态圈出现了 Spring MVC 框架， Spring MVC 是当前最优秀的 MVC 框架。相比于 Struts2 ， Spring MVC 使用更加简单和方便，开发效率更高，并且 Spring MVC 运行速度更快。
-
-MVC 是一种设计模式,Spring MVC 是一款很优秀的 MVC 框架。Spring MVC 可以帮助我们进行更简洁的Web层的开发，并且它天生与 Spring 框架集成。Spring MVC 下我们一般把后端项目分为 Service层（处理业务）、Dao层（数据库操作）、Entity层（实体类）、Controller层(控制层，返回数据给前台页面)。
-
-**Spring MVC 的简单原理图如下：**
-
- ![img](Java工程.assets/60679444-1619579728162.jpg)
+`BeanPostProcessor` 可以对` bean`（或对象）实例进行操作，这意味着 `Spring IoC` 容器实例化一个 `bean` 实例，然后 `BeanPostProcessor` 接口进行它们的工作。
 
 
 
-**工作原理如下图所示：** ![SpringMVC运行原理](Java工程.assets/49790288-1619579729830.jpg)
+**注意：**
 
-上图的一个笔误的小问题：Spring MVC 的入口函数也就是前端控制器 `DispatcherServlet` 的作用是接收请求，响应结果。
+`ApplicationContext` 会自动检测由 `BeanPostProcessor` 接口的实现定义的 `bean`，注册这些` bean` 为后置处理器，然后通过在容器中创建` bean`，在适当的时候调用它。
 
-**流程说明（重要）：**
+**在你自定义的的` BeanPostProcessor` 接口实现类中，要实现以下的两个抽象方法** `BeanPostProcessor.postProcessBeforeInitialization(Object, String)` 和 `BeanPostProcessor.postProcessAfterInitialization(Object, String)` 和，注意命名要准确
 
-1. 客户端（浏览器）发送请求，直接请求到 `DispatcherServlet`。
-2. `DispatcherServlet` 根据请求信息调用 `HandlerMapping`，解析请求对应的 `Handler`。
-3. 解析到对应的 `Handler`（也就是我们平常说的 `Controller` 控制器）后，开始由 `HandlerAdapter` 适配器处理。
-4. `HandlerAdapter` 会根据 `Handler `来调用真正的处理器来处理请求，并处理相应的业务逻辑。
-5. 处理器处理完业务后，会返回一个 `ModelAndView` 对象，`Model` 是返回的数据对象，`View` 是个逻辑上的 `View`。
-6. `ViewResolver` 会根据逻辑 `View` 查找实际的 `View`。
-7. `DispaterServlet` 把返回的 `Model` 传给 `View`（视图渲染）。
-8. 把 `View` 返回给请求者（浏览器）
+否则会出现： `“ The type InitHelloWorld must implement the inherited abstract method BeanPostProcessor.postProcessBeforeInitialization(Object, String) ”`之类的错误
+
+
+
+### 7、Bean 定义继承
+
+bean 定义可以包含**很多的配置信息**，包括**构造函数的参数，属性值，容器的具体信息例如初始化方法，静态工厂方法名**，等等。
+
+子 bean 的定义继承父定义的配置数据。子定义可以根据需要重写一些值，或者添加其他值。
+
+Spring Bean 定义的继承与 Java 类的继承无关，但是继承的概念是一样的。你**可以定义一个父 bean 的定义作为模板和其他子 bean 就可以从父 bean 中继承所需的配置。**
+
+当你**使用基于 XML 的配置元数据**时，通过**使用父属性**，**指定父 bean 作为该属性的值来表明子 bean 的定义。**
 
 
 
@@ -2406,11 +2524,6 @@ MVC 是一种设计模式,Spring MVC 是一款很优秀的 MVC 框架。Spring M
     - xml : `<bean id="userService" class="top.snailclimb.UserService" scope="singleton"/>`
     - 注解：`@Scope(value = "singleton")`
     - **Spring 通过 `ConcurrentHashMap` 实现单例注册表的特殊方式实现单例模式。**
-  - Spring中bean的默认作用域是singleton(单例)的。此外，Spring中bean还有以下作用域：
-    - prototype：每次请求都会创建一个新的bean实例；
-    - request：每一次HTTP请求都会产生一个新的bean，该bean仅在当前HTTP request内有效；
-    - session：每一次HTTP请求都会产生一个新的 bean，该bean仅在当前 HTTP session 内有效；
-    - global-session：全局session作用域，仅仅在基于portlet的web应用中才有意义。
 
 - **4、模板方法模式** : Spring 中 **`jdbcTemplate`、`hibernateTemplate` 等**以 Template 结尾的对数据库操作的类，它们就使用到了模板模式。Spring没有使用继承的方式实现模板模式，而是使用了Callback模式与模板方法模式配合。
 
@@ -2449,22 +2562,22 @@ MVC 是一种设计模式,Spring MVC 是一款很优秀的 MVC 框架。Spring M
 ### 1、Spring管理事务的方式：
 
 1. 编程式事务，在代码中硬编码。(不推荐使用)
-2. 声明式事务，在配置文件中配置（推荐使用）
+2. **声明式事务**，在配置文件中配置（推荐使用）
 
 **声明式事务又分为两种：**
 
-1. 基于XML的声明式事务
-2. 基于注解的声明式事务
+1. 基于**XML**的声明式事务
+2. 基于**注解**的声明式事务
 
 ### 2、Spring事务隔离级别：
 
 **TransactionDefinition 接口中定义了五个表示隔离级别的常量：**
 
-- **TransactionDefinition.ISOLATION_DEFAULT:** 使用后端数据库默认的隔离级别，Mysql 默认采用的 REPEATABLE_READ隔离级别 Oracle 默认采用的 READ_COMMITTED隔离级别.
-- **TransactionDefinition.ISOLATION_READ_UNCOMMITTED:** 最低的隔离级别，允许读取尚未提交的数据变更，**可能会导致脏读、幻读或不可重复读**
-- **TransactionDefinition.ISOLATION_READ_COMMITTED:** 允许读取并发事务已经提交的数据，**可以阻止脏读，但是幻读或不可重复读仍有可能发生**
-- **TransactionDefinition.ISOLATION_REPEATABLE_READ:** 对同一字段的多次读取结果都是一致的，除非数据是被本身事务自己所修改，**可以阻止脏读和不可重复读，但幻读仍有可能发生。**
-- **TransactionDefinition.ISOLATION_SERIALIZABLE:** 最高的隔离级别，完全服从ACID的隔离级别。所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰，也就是说，**该级别可以防止脏读、不可重复读以及幻读**。但是这将严重影响程序的性能。通常情况下也不会用到该级别。
+1. **TransactionDefinition.ISOLATION_DEFAULT:** 使用后端数据库默认的隔离级别，Mysql 默认采用的 REPEATABLE_READ隔离级别 Oracle 默认采用的 READ_COMMITTED隔离级别.
+2. **TransactionDefinition.ISOLATION_READ_UNCOMMITTED:** 最低的隔离级别，允许读取尚未提交的数据变更，**可能会导致脏读、幻读或不可重复读**
+3. **TransactionDefinition.ISOLATION_READ_COMMITTED:** 允许读取并发事务已经提交的数据，**可以阻止脏读，但是幻读或不可重复读仍有可能发生**
+4. **TransactionDefinition.ISOLATION_REPEATABLE_READ:** 对同一字段的多次读取结果都是一致的，除非数据是被本身事务自己所修改，**可以阻止脏读和不可重复读，但幻读仍有可能发生。**
+5. **TransactionDefinition.ISOLATION_SERIALIZABLE:** 最高的隔离级别，完全服从ACID的隔离级别。所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰，也就是说，**该级别可以防止脏读、不可重复读以及幻读**。但是这将严重影响程序的性能。通常情况下也不会用到该级别。
 
 ### 3、Spring事务传播行为：
 
@@ -2495,6 +2608,765 @@ MVC 是一种设计模式,Spring MVC 是一款很优秀的 MVC 框架。Spring M
 关于 `@Transactional ` 注解推荐阅读的文章：
 
 - [透彻的掌握 Spring 中@transactional 的使用](https://www.ibm.com/developerworks/cn/java/j-master-spring-transactional-use/index.html)
+
+
+
+# --------------------------------------------------------------------------———————————————————————————————
+
+# Spring MVC
+
+## Spring MVC 简单概述：
+
+**Model1**：早期 Java Web 的开发中，统一把显示层、控制层、数据层的操作全部交给 JSP 或者 JavaBean 来进行处理
+
+![img](./Java工程.assets/model11.png)
+
+- JSP 和 Java Bean 之间严重耦合，Java 代码和 HTML 代码也耦合在了一起
+- 要求开发者不仅要掌握 Java ，还要有高超的前端水平
+- 前端和后端相互依赖，前端需要等待后端完成，后端也依赖前端完成，才能进行有效的测试
+- 代码难以复用
+
+
+
+**Model2 时代** ：学过 Servlet 并做过相关 Demo 的朋友应该了解“Java Bean(Model)+ JSP（View,）+Servlet（Controller） ”这种开发模式,这就是早期的 JavaWeb MVC 开发模式。Model:系统涉及的数据，也就是 dao 和 bean。View：展示模型中的数据，只是用来展示。Controller：处理用户请求都发送给 ，返回数据给 JSP 并展示给用户。
+
+![img](./Java工程.assets/model2.png)
+
+Model2 模式下还存在很多问题，Model2的抽象和封装程度还远远不够，使用Model2进行开发时不可避免地会重复造轮子，这就大大降低了程序的可维护性和复用性。于是很多JavaWeb开发相关的 MVC 框架应运而生比如Struts2，但是 Struts2 比较笨重。随着 Spring 轻量级开发框架的流行，Spring 生态圈出现了 Spring MVC 框架， Spring MVC 是当前最优秀的 MVC 框架。相比于 Struts2 ， Spring MVC 使用更加简单和方便，开发效率更高，并且 Spring MVC 运行速度更快。
+
+MVC 是一种设计模式,Spring MVC 是一款很优秀的 MVC 框架。Spring MVC 可以帮助我们进行更简洁的Web层的开发，并且它天生与 Spring 框架集成。Spring MVC 下我们一般把后端项目分为 Service层（处理业务）、Dao层（数据库操作）、Entity层（实体类）、Controller层(控制层，返回数据给前台页面)。
+
+**Spring MVC 的简单原理图如下：**
+
+ ![img](Java工程.assets/60679444-1619579728162.jpg)
+
+**工作原理如下图所示：** ![SpringMVC运行原理](Java工程.assets/49790288-1619579729830.jpg)
+
+上图的一个笔误的小问题：Spring MVC 的入口函数也就是前端控制器 `DispatcherServlet` 的作用是接收请求，响应结果。
+
+**流程说明（重要）：**
+
+1. 客户端（浏览器）发送请求，直接请求到 `DispatcherServlet`。
+2. `DispatcherServlet` 根据请求信息调用 `HandlerMapping`，解析请求对应的 `Handler`。
+3. 解析到对应的 `Handler`（也就是我们平常说的 `Controller` 控制器）后，开始由 `HandlerAdapter` 适配器处理。
+4. `HandlerAdapter` 会根据 `Handler `来调用真正的处理器来处理请求，并处理相应的业务逻辑。
+5. 处理器处理完业务后，会返回一个 `ModelAndView` 对象，`Model` 是返回的数据对象，`View` 是个逻辑上的 `View`。
+6. `ViewResolver` 会根据逻辑 `View` 查找实际的 `View`。
+7. `DispaterServlet` 把返回的 `Model` 传给 `View`（视图渲染）。
+8. 把 `View` 返回给请求者（浏览器）
+
+
+
+## 1、什么是SpringMVC?
+
+1. SpringMVC是一种基于 Java 的实现MVC设计模型的请求驱动类型的轻量级Web框架，属于Spring框架的一个模块。
+2. 它通过一套注解，让一个简单的Java类成为处理请求的控制器，而无须实现任何接口。同时它还支持RESTful编程风格的请求。
+
+
+
+## 2、什么是MVC模式？
+
+ ![img](./Java工程.assets/MVC模式.png)
+
+1. MVC的全名是Model View Controller，是模型(model)－视图(view)－控制器(controller)的缩写，是一种软件设计典范。它是用一种业务逻辑、数据与界面显示分离的方法来组织代码，将众多的业务逻辑聚集到一个部件里面，在需要改进和个性化定制界面及用户交互的同时，不需要重新编写业务逻辑，达到减少编码的时间。
+2. V即View视图是指用户看到并与之交互的界面。比如由html元素组成的网页界面，或者软件的客户端界面。MVC的好处之一在于它能为应用程序处理很多不同的视图。在视图中其实没有真正的处理发生，它只是作为一种输出数据并允许用户操纵的方式。
+3. M即model模型是指模型表示业务规则。在MVC的三个部件中，模型拥有最多的处理任务。被模型返回的数据是中立的，模型与数据格式无关，这样一个模型能为多个视图提供数据，由于应用于模型的代码只需写一次就可以被多个视图重用，所以减少了代码的重复性。
+4. C即controller控制器是指控制器接受用户的输入并调用模型和视图去完成用户的需求，控制器本身不输出任何东西和做任何处理。它只是接收请求并决定调用哪个模型构件去处理请求，然后再确定用哪个视图来显示返回的数据。
+
+
+
+## 3、SpringMVC的执行流程？
+
+
+
+![img](./Java工程.assets/MVC流程.png)
+
+
+
+1. 用户点击某个请求路径，发起一个request请求，此请求会被前端控制器处理。
+2. 前端控制器请求处理器映射器去查找Handler。可以依据注解或者XML配置去查找。
+3. 处理器映射器根据配置找到相应的Handler(可能包含若干个Interceptor拦截器)，返回给前端控制器。
+4. 前端控制器请求处理器适配器去执行相应的Handler处理器（常称为Controller）。
+5. 处理器适配器执行Handler处理器。
+6. Handler处理器执行完毕之后会返回给处理器适配器一个ModelAndView对象（SpringMVC底层对象，包括Model数据模型和View视图信息）。
+7. 处理器适配器接收到Handler处理器返回的ModelAndView后，将其返回给前端控制器。
+8. 前端控制器接收到ModelAndView后，会请求视图解析器（ViewResolver）对视图进行解析。
+9. 视图解析器根据View信息匹配到相应的视图结果，反馈给前端控制器。
+10. 前端控制器收到View具体视图后，进行视图渲染，将Model中的模型数据填充到View视图中的request域，生成最终的视图(View)。
+11. 前端控制器向用户返回请求结果。
+
+
+
+## 4、SpringMVC有哪些优点？
+
+1. SpringMVC本身是与Spring框架结合而成的，它同时**拥有Spring的优点**(例如依赖注入DI和切面编程AOP等)。
+2. SpringMVC提供强大的约定大于配置的契约式编程支持，即**提供一种软件设计范式**，减少软件开发人员做决定的次数，开发人员仅需规定应用中不符合约定的部分。
+3. 支持**灵活的URL到页面控制器的映射**。
+4. 可以**方便地与其他视图技术(JSP、FreeMarker等)进行整合**。由于SpringMVC的模型数据往往是放置在Map数据结构中的，因此其可以很方便地被其他框架引用。
+5. 拥有十分简洁的**异常处理机制**。
+6. 可以十分灵活地**实现数据验证、格式化和数据绑定机制**，可以使用任意对象进行数据绑定操作。
+7. **支持RestFul风格。**
+
+
+
+## 5、Spring MVC的主要组件？
+
+1. **前端控制器 DispatcherServlet**：
+
+   其作用是接收用户请求，然后给用户反馈结果。它的作用相当于一个转发器或中央处理器，控制整个流程的执行，对各个组件进行统一调度，以降低组件之间的耦合性，有利于组件之间的拓展。——处理所有的HTTP请求和响应。
+
+2. **处理器映射器 HandlerMapping：**
+
+   其作用是根据请求的URL路径，通过注解或者XML配置，寻找匹配的处理器信息。
+
+3. **处理器适配器 HandlerAdapter：**
+
+   其作用是根据映射器处理器找到的处理器信息，按照特定规则执行相关的处理器（Handler）。
+
+4. **处理器 Handler：**
+
+   其作用是执行相关的请求处理逻辑，并返回相应的数据和视图信息，将其封装至ModelAndView对象中。
+
+5. **视图解析器 ViewResolver：**
+
+   其作用是进行视图的解析操作，通过ModelAndView对象中的View信息将逻辑视图名解析成真正的视图View（如通过一个JSP路径返回一个真正的JSP页面）。
+
+6. **视图 View：**
+
+   View是一个接口，实现类支持不同的View类型（JSP、FreeMarker、Excel等）。
+
+   
+
+## 6、SpringMVC和Struts2的区别有哪些?
+
+最大的区别是Struts2相较于SpringMVC更笨重。
+
+1. SpringMVC的入口是一个Servlet，也就是前端控制器(DispatcherServlet)，而Struts2的入口是一个Filter (StrutsPrepareAndExecuteFilter)。
+
+2. SpringMVC是基于方法开发(一个url对应一个方法)，请求参数传递到方法的形参，可以设计为单例或多例(建议单例)。struts2是基于类开发，请求参数传递到类的成员属性，只能设计为多例。
+
+3. SpringMVC通过参数解析器将request请求内容解析，并给方法形参赋值，将数据和视图封装成ModelAndView对象，最后又将ModelAndView中的模型数据通过reques域传输到页面。Jsp视图解析器默认使用JSTL。Struts2采用值栈存储请求和响应的数据，通过OGNL存取数据。
+
+   
+
+## 7、SpringMVC怎么样设定重定向和请求转发？
+
+我们先说说请求转发与重定向的区别：
+
+### 请求转发与重定向的区别：
+
+1. 请求转发在服务器端完成的；重定向是在客户端完成的。
+2. 请求转发的速度快；重定向速度慢。
+3. 请求转发的是同一次请求；重定向是两次不同请求。
+4. 请求转发不会执行转发后的代码；重定向会执行重定向之后的代码。
+5. 请求转发地址栏没有变化；重定向地址栏有变化。
+6. 请求转发必须是在同一台服务器下完成；重定向可以在不同的服务器下完成。
+
+### SpringMVC设定请求转发：
+
+在返回值前面加"forward:"。
+
+```java
+@RequestParam("/login")
+public String redirect(User user){
+    if{
+        //登录成功...
+    }else{
+        //登录失败，转发到登录页面
+        return "forward:tologin";
+    }
+}
+```
+
+### SpringMVC设定重定向：
+
+在返回值前面加"redirect:"。例如我们在登录的时候，登录失败会重定向到登录页面。
+
+```java
+@RequestParam("/login")
+public String redirect(User user){
+    if{
+        //登录成功...
+    }else{
+        //登录失败，重定向到登录页面
+        return "redirect:tologin";
+    }
+}
+```
+
+
+
+## 8、当一个方法向AJAX返回特殊对象,譬如Object,List等,需要做什么处理？
+
+1. 在方法上加**`@ResponseBody`注解**，表示该方法的返回值不管是什么类型，都**会返回JSON格式的数据**。
+
+2. 把原来Controller类上的@Controller注解替换为**@RestController注解**。
+
+   @RestController = @Controller + @ResponseBody，表明该Controller类所有的方法都返回JSON格式的数据(没有加@RequestMapping注解的方法除外)。
+
+3. `加入@ResponseBody注解就能返回JSON格式数据的原因是`：**SpringMVC提供的HttpMessageConverter**自动转为JSON ，
+
+   如果使用了**Jackson或者Gson**，不需要额外配置就可以自动返回JSON了，因为**框架帮我们提供**了对应的HttpMessageConverter ;
+
+   - 加入Jackson.jar
+   - 在配置文件中配置json的映射
+   - 在接受Ajax方法里面可以直接返回Object、List等，但方法前面要加上@ResponseBody注解。
+
+   如果使用了Alibaba的**Fastjson**的话，则需要自己**手动提供**一个相应的 HttpMessageConverter的实例。
+
+
+
+## 9、SpringMVC的常用注解：
+
+**注解**本质是一个**继承了Annotation的特殊接口**，其具体实现类是**JDK动态代理生成的代理类**。
+
+我们**通过反射获取注解**时，**返回的也是Java运行时生成的动态代理对象**。
+
+通过代理对象调用自定义注解的方法，会最终调用**AnnotationInvocationHandler的invoke方法**，该方法会**从memberValues这个Map中查询出对应的值，而memberValues的来源是Java常量池。**
+
+
+
+**1、@Controller**
+
+`@Controller`用于标记在一个类上，使用它标记的类就是一个SpringMVC Controller对象。处理器适配器将会扫描使用了该注解的类的方法，并检测该方法是否使用了`@RequestMapping`注解。**@Controller 只是定义了一个控制器类，而使用@RequestMapping 注解的方法才是真正处理请求的处理器。**
+
+**2、@RequsestMapping**
+
+@RequestMapping是一个**用来处理请求地址映射的注解，可用于类或方法上**。用于类上，表示类中的所有响应请求的方法都是以该地址作为父路径。返回值会通过视图解析器解析为实际的物理视图，对于 InternalResourceViewResolver 视图解析器，通过 prefix + returnValue + suffix 这样的方式得到实际的物理视图，然后做转发操作。
+
+```java
+<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+    <property name="prefix" value="/WEB-INF/jsp/"/>
+    <property name="suffix" value=".jsp"/>
+</bean>
+```
+
+```
+@RequsestMapping有如下6个属性:
+	1. value：指定请求的实际地址。
+	2. method：指定请求的method类型， GET、POST、PUT、DELETE等。
+	3. consumes：指定处理请求的提交内容类型（Content-Type），例如application/json, text/html。
+	4. produces：指定返回的内容类型，仅当request请求头中的(Accept)类型中包含该指定类型才返回；
+	5. params：指定request中必须包含某些参数值是，才让该方法处理。
+	6. headers：指定request中必须包含某些指定的header值，才能让该方法处理请求。
+```
+
+**3、@ResponseBody**
+
+**@ResponseBody把Java对象转化为json对象**，这种方式用于**Ajax异步请求**，返回的不是一个页面而是**JSON格式的数据**。
+
+**@RequestBody：注解实现接收http请求的json数据，将json转换为java对象。**
+
+**4、@Valid**
+
+标志参数被`Hibernate-Validator校验框架`校验。
+
+**5、@PathVariable**
+
+1. **@PathVariable用于接收uri地址传过来的参数**，Url中可以通过一个或多个{Xxx}占位符映射，通过@PathVariable可以绑定占位符参数到方法参数中，在RestFul接口风格中经常使用。
+2. 例如：请求URL：[http://localhost/user/21/](https://links.jianshu.com/go?to=http%3A%2F%2Flocalhost%2Fuser%2F21%2F)张三/query
+    (Long类型可以根据需求改变为String或int，SpringMVC会自动做转换)
+
+```java
+@RequestMapping("/user/{userId}/{userName}/query")
+public User query(@PathVariable("userId") Long userId, @PathVariable("userName") String userName){
+}
+```
+
+**6、@RequestParam**
+
+@RequestParam用于**将请求参数映射到控制器方法的形参上**，有如下三个属性：
+
+```
+1. value：参数名。
+2. required：是否必需，默认为true，表示请求参数中必须包含该参数，如果不包含抛出异常。
+3. defaultValue：默认参数值，如果设置了该值自动将required设置为false，如果参数中没有包含该参数则使用默认值。
+示例：@RequestParam(value = "pageNum", required = false, defaultValue = "1")
+```
+
+**7、@ControllerAdvice**
+
+@ControllerAdvice**标识一个类是全局异常处理类**。
+
+```java
+@ControllerAdvice
+public class ControllerTest {
+    //全局异常处理类
+}
+```
+
+**8、@ExceptionHandler**
+
+@ExceptionHandler**标识一个方法为全局异常处理的方法。**
+
+```java
+@ExceptionHandler
+public void ExceptionHandler(){
+    //全局异常处理逻辑...
+}
+```
+
+
+
+## 10、如何解决POST请求中文乱码问题，GET的又如何处理呢？
+
+JavaWeb乱码问题一般是客户端(浏览器)与服务器端字符集不一致产生的，如果两者字符集一致就不会出现乱码问题。
+
+### 解决post请求乱码：
+
+SpringMVC默认提供一个解决post请求乱码的过滤器，在web.xml中配置即可
+
+```xml
+<filter>
+    <filter-name>characterEncodingFilter</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+        <param-name>encoding</param-name>
+        <!-- 设置编码格式 -->
+        <param-value>UTF-8</param-value>
+    </init-param>
+</filter>
+<filter-mapping>
+    <filter-name>characterEncodingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+### 解决get请求乱码：
+
+1. 修改tomcat配置文件添加编码与工程编码一致。
+
+   ```xml
+   <ConnectorURIEncoding="utf-8" connectionTimeout="20000" port="8080" protocol="HTTP/1.1" redirectPort="8443"/>
+   ```
+
+2. 对请求参数进行重新编码，`ISO8859-1`是tomcat默认编码，需要将tomcat编码后的内容按`utf-8`编码。
+
+   ```java
+   String userName = new String(request.getParamter("userName").getBytes("ISO8859-1"),"utf-8");
+   ```
+
+
+
+## 11、Spring MVC的异常处理？
+
+ [项目中出现异常怎么办？是时候了解SpringBoot全局异常处理机制](https://www.jianshu.com/p/d7e5ff51a36c)
+
+对于在日常的开发中，遇到的各种可预知、不可预知的异常，在SpringBoot中可以得到解决，可以通过以下3种方式处理：
+
+- **1、使用@ExceptionHandler注解**
+  - 前端发送请求给后端，后端处理时发生异常，可以通过三种方式通知前端：1、返回异常页面，不包含错误信息；2、返回ModelAndView，返回视图和异常信息；3、返回JSON格式数据。
+  - 缺点：**不能实现全局异常处理**；进行**异常处理的方法必须与出错的方法在同一个Controller里面**。
+- **2、实现HandlerExceptionResolver接口**
+  - 可以**实现全局的异常控**制，只要在系统运行中发生异常，它都会捕获到。
+  - 实现该接口，**必须重写resolveException方法**，该方法就是异常处理逻辑，**只能返回ModelAndView 对象**。
+- **3、使用@ControllerAdvice注解 + @ExceptionHandler注解**
+  - 1、当代码加入了 @ControllerAdvice，则不需要必须在同一个controller中了。
+  - 2、@controlleradvice+@ExceptionHandler也可以实现全局的异常捕捉。
+  - 3、不同的类型异常由不同的异常处理方法进行处理。
+
+**SpringBoot默认不支持捕获404异常**，需要添加下面两行配置才能使捕获404异常生效。
+
+```properties
+#出现错误时, 直接抛出异常
+spring.mvc.throw-exception-if-no-handler-found=true
+#不要为我们工程中的资源文件建立映射
+spring.resources.add-mappings=false
+```
+
+
+
+## 12、SpringMVC的控制器是不是单例模式,有什么问题,怎么解决？
+
+- **Controller是单例模式**，在多线程访问的时候可能产生**线程安全问题**，不要使用同步，会影响程序性能。
+- **解决方案是在控制器里面不能编写可变状态量。**
+  - 如果需要使用这些可变状态量，可以使用ThreadLocal机制解决，为每个线程单独生成一份副本，独立操作，互不影响。
+
+
+
+## 13、如果在拦截请求中，想拦截get方式提交的方法,怎么配置？
+
+1. 可以**在@RequestMapping注解里面加上method=RequestMethod.GET。**
+
+   ```java
+   @RequestMapping(value="/toLogin",method = RequestMethod.GET)
+   public ModelAndView toLogin(){}
+   ```
+
+2. **可以使用@GetMapping注解。**
+
+   ```java
+   @GetMapping(value="/toLogin")
+   public ModelAndView toLogin(){}
+   ```
+
+   
+
+## 14、怎样在控制器方法里面得到request或者session？
+
+**直接在控制器方法的形参中声明request，session，SpringMvc就会自动把它们注入。**
+
+```java
+@RequestMapping("/login")
+public ModelAndView login(HttpServletRequest request, HttpSession session){}
+```
+
+
+
+## 15、如果想在拦截的方法里面得到从前台传入的参数,怎么得到？
+
+**直接在控制器方法的形参里面声明这个参数**就可以，但**名字必须和传过来的参数名称一样**，否则参数映射失败。
+ 下面方法形参中的userId，就会接收从前端传来参数名称为userId的值。
+
+```java
+@RequestMapping("/deleteUser")
+public void deleteUser(Long userId){
+    //删除用户操作...
+}
+```
+
+
+
+## 16、前台传入多个参数,并且这些参数都是一个对象的属性,怎么进行参数绑定？
+
+**直接在控制器方法的形参里面声明这个参数就可以**，**SpringMvc就会自动会请求参数赋值到这个对象的属性中**。
+ 下面方法形参中的user用来接收从前端传来的多个参数，参数名称需要和User实体类属性名称一致。
+
+```java
+@RequestMapping("/saveUser")
+public void saveUser(User user){
+    //保存用户操作...
+}
+```
+
+```java
+@Data
+public class User {
+    private Long userId;
+    private String username;
+    private String password;
+    //...
+}
+```
+
+
+
+## 17、SpringMVC中函数的返回值是什么？
+
+ [SpringMVC四种返回值类型总结](https://www.jianshu.com/p/1d6cdc823b9e)
+
+- **1、ModelAndView**
+
+  - 在SpringMVC中，经常返回ModelAndView类型；前后端分离后，后端以返回JSON格式为主。
+
+  - ModelAndView类型可以指定视图名称，也可以绑定数据
+
+    ```java
+    @RequestMapping("/userList")
+    public ModelAndView getAllUser(ModelAndView mv) {
+        List<User> users= userService.getAllUser();
+        //添加数据模型到request域中
+        mv.addObject("users", users);
+        mv.setViewName("userList");//指定视图名
+        return mv;
+    }
+    ```
+
+- **2、void**
+
+  - 1、方法内没有返回值，SpringMVC会默认把该名称当做视图名称解析。存在该视图就返回，不存在就报异常。
+
+    还可以通过加上@ResponseBody注解，返回空的JSON数据。
+
+  - 2、请求转发
+
+  - 3、实现重定向
+
+- **3、String**
+
+  - 1、"userList"——返回String最常见的是返回一个逻辑视图名，这时候一般利用默认的参数Model传递数据。
+  - 2、"redirect:tologin"——重定向：登录失败时重定向到登录页面。
+  - 3、"forward:tologin"——请求转发：登录失败时请求转发到登录页面。
+  - 4、"你真棒！"——真的返回String，相当于JSON格式的数据。
+
+- **4、JSON**
+
+  现在前后端分离的情况下，大部分后端只需要返回JSON数据即可，List 集合、Map集合，实体类等都可以返回，这些数据由 HttpMessageConverter自动转为JSON ，如果使用了Jackson或者Gson，不需要额外配置就可以自动返回JSON了，因为框架帮我们提供了对应的HttpMessageConverter ，如果使用了Alibaba的Fastjson的话，则需要自己手动提供一个相应的 HttpMessageConverter 的实例。
+
+  
+
+## 18、SpringMVC用什么对象从后台向前台传递数据的？
+
+1、使用**Map、Model和ModelMap**的方式，这种方式存储的数据是**在request域中**
+
+```java
+@RequestMapping("/getUser")
+public String getUser(Map<String,Object> map,Model model,ModelMap modelMap){
+    //1.放在map里  
+    map.put("name", "xq");
+    //2.放在model里，一般是使用这个
+    model.addAttribute("habbit", "Play");
+    //3.放在modelMap中 
+    modelMap.addAttribute("city", "gd");
+    modelMap.put("gender", "male");
+    return "userDetail";
+}
+```
+
+2、**使用request的方式**
+
+```java
+@RequestMapping("/getUser")
+public String getUser(Map<String,Object> map,Model model,ModelMap modelMap,HttpServletRequest request){
+    //放在request里  
+    request.setAttribute("user", userService.getUser());
+    return "userDetail";
+}
+```
+
+3、**使用ModelAndView**
+
+```java
+@RequestMapping("/getUser")  
+public ModelAndView getUser(ModelAndView modelAndView) {
+    mav.addObject("user", userService.getUser());  
+    mav.setViewName("userDetail");  
+    return modelAndView;  
+}  
+```
+
+
+
+## 19、SpringMVC中有个类把视图和数据都合并的一起的,叫什么？
+
+**就是ModelAndView。**
+
+1. 使用ModelAndView类存储处理完后的结果数据，以及显示该数据的视图。从名字上看ModelAndView中的Model代表模型，View代表视图，从名字看就很好地解释了该类的作用。Controller处理器调用模型层处理完用户请求后，把结果数据存储在该类的model属性中，把要返回的视图信息存储在该类的view属性中，然后把ModelAndView返回给前端控制器。前端控制器通过调用配置文件中定义的视图解析器，对该对象进行解析，最后把结果数据显示在指定的页面上。
+2. 返回指定页面
+    ModelAndView构造方法可以指定返回的页面名称。
+    也可以通过setViewName()方法跳转到指定的页面 。
+3. 返回所需数值
+    使用addObject()设置需要返回的值，addObject()有几个不同参数的方法，可以默认和指定返回对象的名字。
+
+
+
+
+
+## 20、怎么样把ModelMap里面的数据放入session里面？
+
+**在类上添加`@SessionAttributes`注解将指定的Model数据存储到session中。**
+
+### @SessionAttributes
+
+1. 默认情况下Spring MVC将模型中的数据存储到**request域**中。当一个**请求结束后，数据就失效**了。
+
+   **如果要跨页面使用，那么需要使用到session**。而**@SessionAttributes注解就可以使得模型中的数据存储一份到session域中。**
+
+2. @SessionAttributes只能**定义在Class,interface enum上**，作用是将指定的Model中的键值对添加至session中，方便在一个会话中使用。
+
+**@SessionAttributes参数：**
+
+1. names：这是一个字符串数组。里面应写需要存储到session中数据的名称。
+2. types：根据指定参数的类型，将模型中对应类型的参数存储到session中。
+3. value：其实和上面的names是一样的。
+
+```java
+@SessionAttributes(value={"names"},types={Integer.class})
+@Controller
+public class session{
+
+    @RequestMapping("/session")
+    public String session(Model model){
+        model.addAttributes("names", Arrays.asList("caoyc","zhh","cjx"));
+        model.addAttributes("age", 22);
+        return "/session";
+    }
+}
+```
+
+在上面代码中，在类上添加@SessionAttributes注解，并指定将names名称的Model数据存储到session域中，以及将Integer类型的Model数据存储到session域中。
+
+
+
+## 21.SpringMVC里面拦截器是怎么写的？
+
+ [SpringMVC拦截器实现原理以及登录拦截器实现(图文讲解)](https://www.jianshu.com/p/ef976c096a08)
+
+可以使用SpringMVC拦截器进行认证和授权操作，应用场景有：**登录认证拦截器（商城）**，字符过滤拦截器，日志操作拦截器等等。
+
+**SpringMVC拦截器的实现**一般有两种方式:
+
+1. 自定义的Interceptor类要**实现了Spring的HandlerInterceptor接口**。
+2. **继承实现了HandlerInterceptor接口的类**，比如Spring已经提供的实现了HandlerInterceptor接口的抽象类**HandlerInterceptorAdapter**。
+
+![img](./Java工程.assets/单个拦截器.png)
+
+
+
+**HandlerInterceptor接口中定义了三个方法**，我们就是通过这三个方法来对用户的请求进行拦截处理的。
+
+1. **preHandle()：** 
+
+   这个方法**在Controller处理请求之前被调用**，SpringMVC中的Interceptor是链式的调用的，在一个应用中或者说是在一个请求中可以同时存在多个Interceptor 。每个Interceptor的调用会依据它的声明顺序依次执行，而且**最先执行的都是Interceptor 中的preHandle方法**，所以可以**在这个方法中进行一些前置初始化操作或者是对当前请求的一个预处理**，也可以**在这个方法中进行一些判断来决定请求是否要继续进行下去**。
+
+   该方法的返回值是布尔值Boolean 类型的，当它返回为false 时，表示请求结束，后续的Interceptor和Controller都不会再执行；当返回值为true时就会继续调用下一个Interceptor的preHandle 方法，如果已经是最后一个Interceptor的时候就会是调用当前请求的Controller方法。
+
+2. **postHandle()：**
+
+   这个方法**在Controller方法处理当前请求之后执行**，**在DispatcherServlet进行视图返回渲染之前被调用**，所以可以**在这个方法中对Controller处理之后的ModelAndView对象进行操作**。——多用于处理返回的视图。
+
+   postHandle方法被调用的方向跟preHandle 是相反的，也就是说先声明的Interceptor的postHandle方法反而会后执行。
+
+3. **afterCompletion()**
+
+   这个方法也是**需要当前对应的Interceptor的preHandle方法的返回值为true时才会执行**。顾名思义，该方法将在**整个请求结束之后**，也就是在**DispatcherServlet渲染了对应的视图之后执行**。——适合进行一些**资源清理、记录日志信息**等处理操作。
+
+
+
+**多个拦截器中方法执行规则:**
+
+可以配置多个拦截器，每个拦截器中都有三个方法。下面将总结多个拦截器中的方法执行规律。
+
+1. **preHandle**：**Controller方法处理请求前**执行，根据拦截器定义的顺序，**正向执行**。
+2. **postHandle**：Controller**方法处理请求后**执行，根据拦截器定义的顺序，**逆向执行**。需要**所有的preHandle方法都返回true时**才会调用。
+3. **afterCompletion**：**View视图渲染后**处理方法：根据拦截器定义的顺序，**逆向执行**。**preHandle返回true**就会调用。
+
+
+
+![img](./Java工程.assets/多个拦截器.png)
+
+
+
+
+
+### 我的项目中的拦截器
+
+```java
+@Component      //标注Spring管理的Bean，使用@Component注解在一个类上，表示将此类标记为Spring容器中的一个Bean。
+public class AuthInterceptor extends HandlerInterceptorAdapter {//实现spring的拦截器
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 拦截代码
+
+        // 判断被拦截的请求的访问的方法的注解(是否时需要拦截的)---根据LoginRequired注解进行判断
+        HandlerMethod hm = (HandlerMethod) handler;
+        LoginRequired methodAnnotation = hm.getMethodAnnotation(LoginRequired.class);//用到反射了这里。通过反射方式由类名获得方法信息
+
+        // 是否拦截 -- 有这个注解就进行拦截,没有这个注解就直接放行
+        if (methodAnnotation == null) {//这里表示不需要拦截
+            return true;
+        }
+
+        /**
+         * 新旧Token是否为空可以分成几种情况：
+         * 1、老的空、新的空：说明这个用户从未登陆过
+         * 2、老的不空、新的空： 说明这个用户之前登陆过
+         * 3、老的空、新的不空： 说明这个用户刚刚登陆过，刚从认证中心认证回来--说明cookie里面没有token之前没登录过，但是地址栏里面有个token
+         * 4、老的不空、新的不空：说明这个用户过期了-- cookie里面有一个token之前登陆过，但是验证不过，去验证中心，returnUrl里面返回个token
+         */
+
+        //这里初始化一个新的空值token解决新旧token是否为空四种情况的问题
+        String token = "";
+        String oldToken = CookieUtil.getCookieValue(request, "oldToken", true);//旧的token存在cookie中
+        if (StringUtils.isNotBlank(oldToken)) {
+            token = oldToken;
+        }
+        String newToken = request.getParameter("token");//新的token
+        if (StringUtils.isNotBlank(newToken)) {
+            token = newToken;//如果新的跟旧的都有值，说明之前的token过期了，需要使用新的token
+        }
+
+
+        // 调用认证中心进行验证--远程调用--通过它发送http请求调用
+        String success = "fail";
+        Map<String, String> successMap = new HashMap<>();
+        if(StringUtils.isNotBlank(token)){
+
+            String ip = request.getHeader("x-forwarded-for");//获得通过nginx转发的客户端ip
+            if(StringUtils.isBlank(ip)){//如果nginx获得ip为空，说明没有nginx代理
+                ip = request.getRemoteAddr();//从request中获得ip--如果请求直接来自于客户端
+                if(StringUtils.isBlank(ip)){
+                    //说明是非法请求，或者nginx负载均衡转发出现问题
+                    ip = "127.0.0.1";
+                }
+            }
+//            success  = HttpclientUtil.doGet("http://passport.gmall.com:8086/verify?token=" + token);//判断验证是否通过
+            String successJson  = HttpclientUtil.doGet("http://passport.gmall.com:8086/verify?token=" + token +"&currentIp="+ip);
+
+            successMap = JSON.parseObject(successJson, Map.class);
+
+            success = successMap.get("status");
+        }
+
+        // 是否必须登录
+        boolean loginSuccess = methodAnnotation.loginSuccess();// 获得该请求是否必登录成功
+
+        if (loginSuccess) {//loginSuccess=true   身份验证通过
+            // 必须登录成功才能使用
+            if (!success.equals("success")) {
+                //重定向回passport登录 -- 回到认证中心
+                StringBuffer requestURL = request.getRequestURL();//这里是从request中获取返回的url
+                response.sendRedirect("http://passport.gmall.com:8086/index?ReturnUrl="+requestURL);
+                return false;
+            }
+
+            // 需要将token携带的用户信息写入
+            request.setAttribute("memberId", successMap.get("memberId"));
+            request.setAttribute("nickname", successMap.get("nickname"));
+
+            //验证通过，覆盖cookie中的token---判断有用之后再写入cookie
+            if(StringUtils.isNotBlank(token)){
+                CookieUtil.setCookie(request,response,"oldToken",token,60*60*2,true);
+            }
+        } else {// loginSuccess=false   身份验证没有通过--但是通过不了也能使用--购物车模块--虽然进不了下面success分支
+            // 没有登录也能用，但是必须验证 --因为会影响分支
+            if (success.equals("success")) {
+                // 需要将token携带的用户信息写入
+                request.setAttribute("memberId", successMap.get("memberId"));
+                request.setAttribute("nickname", successMap.get("nickname"));
+
+                //验证通过，覆盖cookie中的token----success的时候才将token写入cookie
+                if(StringUtils.isNotBlank(token)){
+                    CookieUtil.setCookie(request,response,"oldToken",token,60*60*2,true);
+                }
+            }
+        }
+        return true;
+    }
+}
+```
+
+然后在LoginRequired中定义注解：
+
+```java
+//这里是通过注解的方式来标识具体的方法是否需要通过拦截器---如果方法中有@LoginRequired注解说明走拦截器
+//还可以通过web模块是否扫描拦截器来决定拦截器是否使用     --item-web、search-web不走拦截器
+
+/***
+ * 1.@Target ：用于描述注解的使用范围，也就是说使用了@Target去定义一个注解，那么可以决定定义好的注解能用在什么地方
+ * 2.@Retention：用于描述注解的生命周期，也就是说这个注解在什么范围内有效，
+ *   注解的生命周期和三个阶段有关：源代码阶段、CLASS文件中有效、运行时有效，故其取值也就三个值，分别代表着三个阶段
+ *
+ */
+//元注解
+@Target(ElementType.METHOD)//只在方法中使用
+@Retention(RetentionPolicy.RUNTIME)//生效范围为运行时有效
+public @interface LoginRequired {//@interface
+    //加入判断，将方法分成三类，
+    boolean loginSuccess() default true;
+    //拦截校验判断是否需要通过---loginSuccess为false表示登录失败，该方法也能继续使用；如果为true则代表判定失败，该方法就无法使用
+}
+```
+
+具体调用：
+
+```java
+@RequestMapping("checkCart")
+@LoginRequired(loginSuccess = false)
+//检查购物车，返回购物车的内嵌页---出一个小的页面， ajax异步+内嵌页---刷新内嵌页
+public String checkCart(String isChecked, String skuId, HttpServletRequest request, HttpServletResponse response, HttpSession session, ModelMap modelMap) 
+```
+
+
 
 
 
