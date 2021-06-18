@@ -3979,3 +3979,430 @@ MyBatis 将所有 **Xml 配置信息**都封装到 All-In-One 重量级对象 **
 与其他比较标准的 ORM 框架（比如 Hibernate ）不同， mybatis 并没有将 Java库关联起来，而是将Java方法与sql语句关联起来，mybatis 允许用户充分利用数据库的各种功能，例如存储、视图、各种复杂的查询以及某些数据库的专有特性。
 
 自己写sql语句的好处是，**可以根据自己的需求，写出最优的 sql 语**句。灵活性高。但是，由于是自己写 sql 语句，导致平台可移植性不高。MySQL语句和Oracle语句不同。
+
+
+
+
+
+# --------------------------------------------------------------------------———————————————————————————————
+
+# SpringBoot
+
+
+
+## 0、Spring家族
+
+- Spring是一个轻量级的控制反转(IoC)和面向切面(AOP)的容器框架。Spring使你能够编写更干净、更可管理、并且更易于测试的代码。
+
+- Spring MVC是Spring的一个模块，一个web框架。通过Dispatcher Servlet, ModelAndView 和 View Resolver，开发web应用变得很容易。主要针对的是网站应用程序或者服务开发——URL路由、Session、模板引擎、静态Web资源等等。
+
+- Spring配置复杂，繁琐，所以推出了Spring boot，约定优于配置，简化了spring的配置流程。
+
+- Spring Cloud构建于Spring Boot之上，是一个关注全局的服务治理框架。
+
+
+
+**Spring和SpringMVC：**
+
+Spring是一个一站式的轻量级的java开发框架，核心是控制反转（IOC）和面向切面（AOP），针对于开发的WEB层(springMvc)、业务层(Ioc)、持久层(jdbcTemplate)等都提供了多种配置解决方案；
+
+SpringMVC是Spring基础之上的一个MVC框架，主要处理web开发的路径映射和视图渲染，属于Spring框架中WEB层开发的一部分；
+
+**SpringMVC和SpringBoot：**
+
+SpringMVC属于一个企业WEB开发的MVC框架，涵盖面包括前端视图开发、文件配置、后台接口逻辑开发等，XML、config等配置相对比较繁琐复杂；
+
+SpringBoot框架相对于SpringMVC框架来说，更专注于开发微服务后台接口，不开发前端视图；
+
+**SpringBoot和SpringCloud：**
+
+SpringBoot使用了默认大于配置的理念，集成了快速开发的Spring多个插件，同时自动过滤不需要配置的多余的插件，简化了项目的开发配置流程，一定程度上取消xml配置，是一套快速配置开发的脚手架，能快速开发单个微服务；
+
+SpringCloud大部分的功能插件都是基于SpringBoot去实现的，SpringCloud关注于全局的微服务整合和管理，将多个SpringBoot单体微服务进行整合以及管理；SpringCloud依赖于SpringBoot开发，而SpringBoot可以独立开发；
+
+
+
+**总结下来：**
+
+- Spring框架是核心，提供了基础功能IOC、AOP等，衍生出其他产品包含高级功能；
+- Spring MVC 是基于Spring的一个 MVC 框架 ；
+- Spring Boot 是为简化Spring配置的快速开发整合包，专注于微服务方面的接口开发，解耦前端；
+- Spring Cloud是构建在Spring Boot之上的服务治理框架，更关注全局微服务的整合和管理，相当于管理多个SpringBoot框架单体微服务。
+
+
+
+
+
+## 1、SpringBoot简要介绍
+
+Spring Boot是Spring开源组织下的子项目，是Spring组件一站式解决方案，主要是简化了使用Spring的难度，简省了繁重的配置，提供了各种启动器，开发者能快速上手。
+
+
+
+**SpringBoot的优点：**
+
+- 独立运行
+
+  SpringBoot 内嵌了各种servlet容器，Tomcat、Jetty等，现在不再需要打成war包部署到容器中，Spring Boot只要打成一个可执行的jar包就能独立运行，所有的依赖包都在一个jar包内。
+
+- 简化配置
+
+  spring-boot-starter-web启动器自动依赖其他组件，简少了maven的配置。
+
+- 自动配置
+
+  Spring Boot能根据当前类路径下的类、jar包来自动配置bean，如添加一个spring-boot-starter-web启动器就能拥有web的功能，无需其他配置。
+
+- 无代码生成和XML配置
+
+  Spring Boot配置过程中无代码生成，也无需XML配置文件就能完成所有配置工作，这一切都是借助于条件注解完成的，这也是Spring4.x的核心功能之一。
+
+- 应用监控
+
+  Spring Boot提供一系列端点可以监控服务及应用，做健康检测。
+
+
+
+## 2、SpringBoot的配置文件
+
+**核心配置文件：**
+
+- **application配置文件**，主要用于SpringBoot 项目的自动化配置。
+
+- **bootstrap 配置文件**由父ApplicationContext加载，比application优先加载；并且bootstrap里的属性不能被覆盖。
+
+  应用场景：
+
+  - 使用 Spring Cloud Config 配置中心时，这时需要在 bootstrap 配置文件中添加连接到配置中心的配置属性来加载外部配置中心的配置信息；
+  - 一些固定的不能被覆盖的属性；
+  - 一些加密/解密的场景；
+
+
+
+**配置文件的格式：**
+
+- .properties 格式文件：
+
+  ```
+  app.user.name = javastack
+  ```
+
+- .yml 格式文件：——不支持 `@PropertySource` 注解导入配置
+
+  ```
+  app:
+    user:
+      name: javastack
+  ```
+
+  
+
+## 3、SpringBoot的核心注解@SpringBootApplication
+
+启动类上面的注解是**`@SpringBootApplication`**,也是SpringBoot的核心注解，主要包含以下三个注解：
+
+- **@SpringBootConfiguration**：组合了 @Configuration 注解，实现**配置文件**的功能。允许在上下文中注册额外的 bean 或导入其他配置类。
+
+- @**EnableAutoConfiguration**：打开**自动配置**的功能，也可以关闭某个自动配置的选项，
+
+  如关闭数据源自动配置功能： @SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })。
+
+- **@ComponentScan**：Spring组件扫描。 扫描被`@Component` (`@Service`,`@Controller`)注解的 bean，注解默认会扫描启动类所在的包下所有的类 ，可以自定义不扫描某些 bean。
+
+
+
+## 4、开启SpringBoot项目——SpringBoot依赖
+
+**1. 继承spring-boot-starter-parent项目**
+
+```xml
+<parent>    
+  <groupId>org.springframework.boot</groupId>    
+  <artifactId>spring-boot-starter-parent</artifactId>    
+  <version>1.5.6.RELEASE</version>
+</parent>
+```
+
+**2. 导入spring-boot-dependencies项目依赖**
+
+```xml
+    <dependency>            
+      <groupId>org.springframework.boot</groupId>            
+      <artifactId>spring-boot-dependencies</artifactId>            
+      <version>1.5.6.RELEASE</version>            
+      <type>pom</type>            
+      <scope>import</scope>        
+    </dependency>
+```
+
+
+
+## 5、运行SpringBoot的方式：
+
+- 1）打包用命令或者放到容器中运行
+
+- 2）用 Maven/ Gradle 插件运行
+
+- 3）直接执行 main 方法运行
+
+
+
+## 6、SpringBoot自动装配
+
+注解 @EnableAutoConfiguration, @Configuration, @ConditionalOnClass 就是自动配置的核心，首先它得是一个配置文件，其次根据类路径下是否有这个类去自动配置。
+
+
+
+在Spring Framework中已经实现了自动装配功能，SpringBoot在基础上通过SPI的方式进行优化。
+
+> SpringBoot 定义了一套接口规范，这套规范规定：SpringBoot 在启动时会扫描外部引用 jar 包中的`META-INF/spring.factories`文件，将文件中配置的类型信息加载到 Spring 容器（此处涉及到 JVM 类加载机制与 Spring 的容器知识），并执行类中定义的各种操作。对于外部 jar 来说，只需要按照 SpringBoot 定义的标准，就能将自己的功能装置进 SpringBoot。
+
+没有 Spring Boot 的情况下，如果我们需要引入第三方依赖，需要手动配置，非常麻烦。但是，Spring Boot 中，我们直接引入一个 starter 即可。比如你想要在项目中使用 redis 的话，直接在项目中引入对应的 starter 即可。
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+```
+
+引入 starter 之后，我们通过少量注解和一些简单的配置就能使用第三方组件提供的功能了。
+
+在我看来，自动装配可以简单理解为：**通过注解或者一些简单的配置就能在 Spring Boot 的帮助下实现某块功能。**
+
+
+
+Spring Boot 通过`@EnableAutoConfiguration`开启自动装配，通过 SpringFactoriesLoader 最终加载`META-INF/spring.factories`中的自动配置类实现自动装配，自动配置类其实就是通过`@Conditional`按需加载的配置类，想要其生效必须引入`spring-boot-starter-xxx`包实现起步依赖。
+
+
+
+主要是Spring Boot的启动类上的核心注解SpringBootApplication注解主配置类，有了这个主配置类启动时就会为SpringBoot开启一个@EnableAutoConfiguration注解自动配置功能。
+
+有了这个EnableAutoConfiguration的话就会：
+
+1. 从配置文件META_INF/Spring.factories加载可能用到的自动配置类
+2. 去重，并将exclude和excludeName属性携带的类排除
+3. 过滤，将满足条件（@Conditional）的自动配置类返回
+
+
+
+## **7、如何理解 Spring Boot 中的 Starters？**
+
+Starters可以理解为启动器，它包含了一系列可以集成到应用里面的依赖包，你可以一站式集成 Spring 及其他技术，而不需要到处找示例代码和依赖包。如你想使用 Spring JPA 访问数据库，只要加入 spring-boot-starter-data-jpa 启动器依赖就能使用了。
+
+Starters包含了许多项目中需要用到的依赖，它们能快速持续的运行，都是一系列得到支持的管理传递性依赖。
+
+**Starters命名：**
+
+Spring Boot官方的启动器都是以spring-boot-starter-命名的，代表了一个特定的应用类型。
+
+第三方的启动器不能以spring-boot开头命名，它们都被Spring Boot官方保留。一般一个第三方的应该这样命名，像mybatis的mybatis-spring-boot-starter。
+
+![image-20210618203204181](./Java工程.assets/starters分类.png)
+
+
+
+## 8、Runner启动器——在启动时运行特定代码
+
+如果你想在Spring Boot启动的时候运行一些特定的代码，你可以实现接口 `ApplicationRunner`或者 `CommandLineRunner`，这两个接口实现方式一样，它们都只提供了一个run方法。
+
+- **CommandLineRunner**：启动获取命令行参数。
+
+- **ApplicationRunner**：启动获取应用启动的时候参数。
+
+```java
+// 使用情况1
+import org.springframework.boot.*
+import org.springframework.stereotype.*
+  
+@Component
+public class MyBean implements CommandLineRunner {    
+  public void run(String... args) {        
+    // Do something...    
+  }
+}
+
+// 情况2
+@Bean
+public CommandLineRunner init() {    
+  return (String... strings) -> {    
+  };
+}
+```
+
+如果启动的时候有多个ApplicationRunner和CommandLineRunner，想控制它们的启动顺序，可以实现 `org.springframework.core.Ordered`接口或者使用 `org.springframework.core.annotation.Order`注解。
+
+
+
+## 9、读取配置的方式
+
+- **@Value注解读取方式**
+
+```java
+@Component
+public class InfoConfig1{
+  @Value("${info.address}")   
+  private String address;
+    
+	@Value("${info.company}")
+	private String company;
+}
+```
+
+- **@ConfigurationProperties注解读取方式**
+
+```java
+@Component
+@ConfigurationProperties(prefix = "info")
+public class InfoConfig2{
+    
+	private String address;   
+	private String company;
+}
+```
+
+- **@PropertySource+@Value注解读取方式**
+
+  ![image-20210618205727087](./Java工程.assets/读取1.png)
+
+- **@PropertySource+@ConfigurationProperties注解读取方式**
+
+  ![image-20210618205810805](./Java工程.assets/读取2.png)
+
+- **Environment读取方式**
+
+  ![image-20210618205842961](./Java工程.assets/读取3.png)
+
+
+
+## 10、日志框架
+
+Spring Boot 支持 Java Util Logging, Log4j2, Lockback 作为日志框架，
+
+如果你使用 Starters 启动器，Spring Boot 将使用 Logback 作为默认日志框架
+
+## 11、**实现热部署的方式：**
+
+- Spring Loaded
+- Spring-boot-devtools
+
+
+
+## 12、配置属性加载顺序：
+
+1、开发者工具 `Devtools` 全局配置参数；
+
+2、单元测试上的 `@TestPropertySource` 注解指定的参数；
+
+3、单元测试上的 `@SpringBootTest` 注解指定的参数；
+
+4、命令行指定的参数，如 `java -jar springboot.jar --name="Java技术栈"`；
+
+5、命令行中的 `SPRING_APPLICATION_JSONJSON` 指定参数, 如 `java -Dspring.application.json='{"name":"Java技术栈"}' -jar springboot.jar`
+
+6、`ServletConfig` 初始化参数；
+
+7、`ServletContext` 初始化参数；
+
+8、JNDI参数（如 `java:comp/env/spring.application.json`）；
+
+9、Java系统参数（来源：`System.getProperties()`）；
+
+10、操作系统环境变量参数；
+
+11、`RandomValuePropertySource` 随机数，仅匹配：`ramdom.*`；
+
+12、JAR包外面的配置文件参数（`application-{profile}.properties（YAML）`）
+
+13、JAR包里面的配置文件参数（`application-{profile}.properties（YAML）`）
+
+14、JAR包外面的配置文件参数（`application.properties（YAML）`）
+
+15、JAR包里面的配置文件参数（`application.properties（YAML）`）
+
+16、`@Configuration`配置文件上 `@PropertySource` 注解加载的参数；
+
+17、默认参数（通过 `SpringApplication.setDefaultProperties` 指定）；
+
+
+
+## 13、**Spring Boot 2.X 有什么新特性？与 1.X 有什么区别？**
+
+- 配置变更
+- JDK 版本升级
+- 第三方类库升级
+- 响应式 Spring 编程支持
+- HTTP/2 支持
+- 配置属性绑定
+- 更多改进与加强...
+
+
+
+### SpringBoot事物的使用
+
+- SpringBoot的事物很简单，首先使用注解EnableTransactionManagement开启事物之后，然后在Service方法上添加注解Transactional便可。
+
+### Async异步调用方法
+
+- 在SpringBoot中使用异步调用是很简单的，只需要在方法上使用@Async注解即可实现方法的异步调用。 注意：需要在启动类加入@EnableAsync使异步调用@Async注解生效。
+
+### 什么是 JavaConfig？
+
+- Spring JavaConfig 是 Spring 社区的产品，Spring 3.0引入了他，它提供了配置 Spring IOC 容器的纯Java 方法。因此它有助于避免使用 XML 配置。使用 JavaConfig 的优点在于：
+  - 面向对象的配置。由于配置被定义为 JavaConfig 中的类，因此用户可以充分利用 Java 中的面向对象功能。一个配置类可以继承另一个，重写它的@Bean 方法等。
+  - 减少或消除 XML 配置。基于依赖注入原则的外化配置的好处已被证明。但是，许多开发人员不希望在 XML 和 Java 之间来回切换。JavaConfig 为开发人员提供了一种纯 Java 方法来配置与 XML 配置概念相似的 Spring 容器。从技术角度来讲，只使用 JavaConfig 配置类来配置容器是可行的，但实际上很多人认为将JavaConfig 与 XML 混合匹配是理想的。
+  - 类型安全和重构友好。JavaConfig 提供了一种类型安全的方法来配置 Spring容器。由于 Java 5.0 对泛型的支持，现在可以按类型而不是按名称检索 bean，不需要任何强制转换或基于字符串的查找。
+- 常用的Java config：
+  - @Configuration：在类上打上写下此注解，表示这个类是配置类
+  - @ComponentScan：在配置类上添加 @ComponentScan 注解。该注解默认会扫描该类所在的包下所有的配置类，相当于之前的 <context:component-scan >。
+  - @Bean：bean的注入：相当于以前的< bean id="objectMapper" class="org.codehaus.jackson.map.ObjectMapper" />
+  - @EnableWebMvc：相当于xml的<mvc:annotation-driven >
+  - @ImportResource： 相当于xml的 < import resource="applicationContext-cache.xml">
+
+### 
+
+### 什么是 YAML？
+
+- YAML 是一种人类可读的数据序列化语言。它通常用于配置文件。与属性文件相比，如果我们想要在配置文件中添加复杂的属性，YAML 文件就更加结构化，而且更少混淆。可以看出 YAML 具有分层配置数据。
+
+### YAML 配置的优势在哪里 ?
+
+- YAML 现在可以算是非常流行的一种配置文件格式了，无论是前端还是后端，都可以见到 YAML 配置。那么 YAML 配置和传统的 properties 配置相比到底有哪些优势呢？
+  - 配置有序，在一些特殊的场景下，配置有序很关键
+  - 简洁明了，他还支持数组，数组中的元素可以是基本数据类型也可以是对象
+  - 相比 properties 配置文件，YAML 还有一个缺点，就是不支持 @PropertySource 注解导入自定义的 YAML 配置。
+
+### SpringBoot微服务中如何实现 session 共享 ?
+
+- 在微服务中，一个完整的项目被拆分成多个不相同的独立的服务，各个服务独立部署在不同的服务器上，各自的 session 被从物理空间上隔离开了，但是经常，我们需要在不同微服务之间共享 session ，常见的方案就是 Spring Session + Redis 来实现 session 共享。将所有微服务的 session 统一保存在 Redis 上，当各个微服务对 session 有相关的读写操作时，都去操作 Redis 上的 session 。这样就实现了 session 共享，Spring Session 基于 Spring 中的代理过滤器实现，使得 session 的同步操作对开发人员而言是透明的，非常简便。
+
+### 如何使用Spring Boot实现分页和排序？
+
+
+使用Spring Boot实现分页非常简单。使用Spring Data-JPA可以实现将可分页的org.springframework.data.domain.Pageable传递给存储库方法。
+
+
+
+### Spring Boot中的监视器是什么？
+
+
+Spring boot actuator是spring启动框架中的重要功能之一。Spring boot监视器可帮助您访问生产环境中正在运行的应用程序的当前状态。有几个指标必须在生产环境中进行检查和监控。即使一些外部应用程序可能正在使用这些服务来向相关人员触发警报消息。监视器模块公开了一组可直接作为HTTP URL访问的REST端点来检查状态。
+
+
+
+### 如何使用Spring Boot实现异常处理？
+
+
+Spring提供了一种使用ControllerAdvice处理异常的非常有用的方法。 我们通过实现一个ControlerAdvice类，来处理控制器类抛出的所有异常。
+
+
+
+### 实现Spring Boot应用程序的安全性
+
+——使用 spring-boot-starter-security依赖项，并且必须添加安全配置。配置类必须扩展WebSecurityConfigurerAdapter覆盖其方法。
+
+
+
+### 集成Spring Boot和ActiveMQ
+
+——使用spring-boot-starter-activemq 依赖关系。 
