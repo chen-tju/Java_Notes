@@ -2832,7 +2832,13 @@ public String redirect(User user){
 
 **2、@RequsestMapping**
 
-@RequestMapping是一个**用来处理请求地址映射的注解，可用于类或方法上**。用于类上，表示类中的所有响应请求的方法都是以该地址作为父路径。返回值会通过视图解析器解析为实际的物理视图，对于 InternalResourceViewResolver 视图解析器，通过 prefix + returnValue + suffix 这样的方式得到实际的物理视图，然后做转发操作。
+@RequestMapping是一个**用来处理请求地址映射的注解，可用于类或方法上**。
+
+- 用于类上，表示类中的所有响应请求的方法都是以该地址作为父路径。返回值会通过视图解析器解析为实际的物理视图，对于 InternalResourceViewResolver 视图解析器，通过 prefix + returnValue + suffix 这样的方式得到实际的物理视图，然后做转发操作。
+
+- 写在方法上：
+  - `@RequestMapping("/req")` 表示不区分请求类型。
+  - `@RequestMapping(value = "/req",method = RequestMethod.POST)` 表示这是一个POST请求。
 
 ```java
 <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
@@ -2905,6 +2911,60 @@ public void ExceptionHandler(){
     //全局异常处理逻辑...
 }
 ```
+
+
+
+### 补充：前端向Controller传递参数的方式：
+
+-  1、直接把表单的参数写在**Controller相应的方法的形参**中
+
+  ```java 
+  public String addUser(String username,String password) {}
+  ```
+
+- 2、通过**HttpServletRequest**接收
+
+  ```java
+  public String addUser(HttpServletRequest request) {
+  ```
+
+- 3、通过一个**bean**来接收
+
+  ```java
+  public String addUser(UserModel user) {
+  ```
+
+- 4、使用**@ModelAttribute注解**获取POST请求的FORM表单数据
+
+  ```java
+  @RequestMapping(value="/addUser",method=RequestMethod.POST)
+  public String addUser(@ModelAttribute("user") UserModel user) {
+  ```
+
+- 5、用**注解@RequestParam**绑定请求参数到方法入参  
+
+  当请求参数username不存在时会有异常发生,可以通过设置属性required=false解决,
+
+  例如: **@RequestParam(value="username", required=false)**
+
+  ```java
+  @RequestMapping(value="/addUser",method=RequestMethod.GET)
+  public String addUser(@RequestParam("username") String username,@RequestParam("password") String password) {    
+  ```
+
+- 6、用request.getQueryString() 获取spring MVC get请求的参数，只适用get请求
+
+  ```java
+  @RequestMapping(value="/addUser",method=RequestMethod.GET)
+  public String addUser(HttpServletRequest request) { 
+    System.out.println("username is:"+request.getQueryString()); 
+  	return "demo/index"; 
+  }
+  ```
+
+
+
+
 
 
 
@@ -3029,7 +3089,7 @@ public void deleteUser(Long userId){
 
 ## 16、前台传入多个参数,并且这些参数都是一个对象的属性,怎么进行参数绑定？
 
-**直接在控制器方法的形参里面声明这个参数就可以**，**SpringMvc就会自动会请求参数赋值到这个对象的属性中**。
+**直接在控制器方法的形参里面声明这个参数就可以**，**SpringMVC就会自动会请求参数赋值到这个对象的属性中**。
  下面方法形参中的user用来接收从前端传来的多个参数，参数名称需要和User实体类属性名称一致。
 
 ```java
@@ -3048,6 +3108,92 @@ public class User {
     //...
 }
 ```
+
+
+
+### Demo项目中前端带参查询：
+
+**Controller：**
+
+```java
+		@RequestMapping("getProductInfoByName")
+    @ResponseBody
+    public List<ProductInfo> getProductInfoByName(@RequestParam("productName") String productName){
+        List<ProductInfo> productInfos = demoService.getProductInfoByName(productName);
+        return productInfos;
+    }
+```
+
+**Service:**
+
+```java
+		public interface DemoService {
+    		List<ProductInfo> getProductInfoByName(String productName);
+		}
+```
+
+**ServiceImpl:**
+
+```java
+		@Override
+    public List<ProductInfo> getProductInfoByName(String productName) {
+        List<ProductInfo> productInfos = productInfoMapper.selectByProductName(productName);
+
+        return productInfos;
+    }
+```
+
+**Mapper:**--【命名参数】：明确指定封装参数——@Param注解
+
+```java
+public interface ProductInfoMapper extends Mapper<ProductInfo> {
+    List<ProductInfo> selectByProductName(@Param("productName") String productName);
+}
+```
+
+**Mapper.xml:**
+
+```xml
+<mapper namespace="com.meituan.finance.mapper.ProductInfoMapper">
+
+    <select id="selectByProductName" resultType="com.meituan.finance.beans.ProductInfo">
+        SELECT * FROM `product_info` t WHERE t.`product_name` = #{productName}
+    </select>
+
+</mapper>
+```
+
+
+
+
+
+
+
+## SpringMVC中的参数绑定
+
+参考链接：[https://blog.csdn.net/eson_15/article/details/51718633](https://blog.csdn.net/eson_15/article/details/51718633)
+
+
+
+SpringMVC默认支持的绑定类型有：
+
+- HttpServletReequest对象：通过request对象可以获取参数信息
+
+- HttpservletResponse对象：通过response对象可以处理响应信息
+
+- HTTPSession对象：获取session中存储的对象
+
+- Model/ModelMap：Model是一个接口，ModelMap是一个接口的实现。作用是将模型数据填充到request域。
+
+
+
+在参数绑定过程中，如果遇到上面类型就直接进行绑定。也就是说，我们可以在controller的方法的形参中直接定义上面这些类型的参数，springmvc会自动绑定。这里要说明一下的就是Model/ModelMap对象，Model是一个接口，ModelMap是一个接口实现 ，作用是将Model数据填充到request域，跟ModelAndView类似。
+
+
+
+TODO：集合类型的绑定等着再看
+
+
 
 
 
@@ -3242,7 +3388,8 @@ public class session{
 ### 我的项目中的拦截器
 
 ```java
-@Component      //标注Spring管理的Bean，使用@Component注解在一个类上，表示将此类标记为Spring容器中的一个Bean。
+//标注Spring管理的Bean，使用@Component注解在一个类上，表示将此类标记为Spring容器中的一个Bean。
+@Component      
 public class AuthInterceptor extends HandlerInterceptorAdapter {//实现spring的拦截器
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 拦截代码
@@ -3690,11 +3837,58 @@ value 应该是一个数值吧。然后如果对方传过来的是 001  and name
 **1、顶级标签**
 
 - `sql` – 可被其他语句引用的可重用语句块。
-
 - `insert` – 映射插入语句
 - `update` – 映射更新语句
 - `delete` – 映射删除语句
 - `select` – 映射查询语句
+
+
+
+xxxxMapper.xml
+
+```xml
+		<!-- 查 -->
+    <select id="getPersonById" resultType="com.ljsh.test.model.Person">
+        SELECT
+        *
+        FROM
+        <include refid="table"/>
+        WHERE
+        id = #{id}
+    </select>
+
+    <!-- 增 -->
+    <insert id="newp" parameterType="com.ljsh.test.model.Person">
+        INSERT INTO
+        <include refid="table"/>
+        (name,phone)
+        VALUES
+        (#{name},#{phone})
+    </insert>
+
+    <!-- 改 -->
+    <update id="update" parameterType="com.ljsh.test.model.Person">
+        UPDATE
+        <include refid="table"/>
+        SET
+        <!--<if test="name != null">name = #{name}</if>-->
+        name  = #{name},phone = #{phone},status = #{status}
+        WHERE
+        id = #{id}
+    </update>
+
+    <!-- 删 -->
+    <delete id="delete" parameterType="com.ljsh.test.model.Person">
+        DELETE FROM
+        <include refid="table"/>
+        WHERE
+        id = #{id}
+    </delete>
+```
+
+
+
+
 
 其它：
 
@@ -3712,6 +3906,102 @@ value 应该是一个数值吧。然后如果对方传过来的是 001  and name
 `trim、where、set、foreach、if、choose、when、otherwise、bind`等
 
 ![image-20210429171023845](Java工程.assets/image-20210429171023845.png)
+
+
+
+### ResultMap
+
+参考链接：[https://juejin.cn/post/6844903858477481992](https://juejin.cn/post/6844903858477481992)
+
+- 字段映射——ResultType（结果集类型） --> ResultMap（结果的映射关系）
+  - 如果数据库中表的字段与`User`类的属性名称一致，我们就可以使用`resultType`来返回。
+  - 属性字段名不一致时，把`select`语句中的`resultType`修改为`resultMap=" "`
+
+- 构造方法<constructor>
+- 关联<association>
+- 集合<collection>
+
+
+
+### 通用Mapper：
+
+通用Mapper是一款用于单表增删改查的Mybatis插件，开发人员可以省去编写sql语句和在DAO层编写任何方法，就能轻松实现单表的常用操作。
+
+[使用文档](https://mapperhelper.github.io/docs/2.use/)
+
+**添加依赖：**
+
+```xml
+<dependency>
+    <groupId>tk.mybatis</groupId>
+    <artifactId>mapper-spring-boot-starter</artifactId>
+    <version>2.1.5</version>
+</dependency>
+```
+
+**配置：**
+
+```bash
+# 服务端口
+server.port=8080
+# jdbc
+spring.datasource.password=123456
+spring.datasource.username=root
+spring.datasource.url=jdbc:mysql://localhost:3306/Finance_Test?serverTimezone=UTC&characterEncoding=UTF-8
+# mybtais配置
+mybatis.mapper-locations=classpath:mapper/*Mapper.xml
+mybatis.configuration.map-underscore-to-camel-case=true
+# 解决问题：java.lang.RuntimeException: java.lang.reflect.InvocationTargetException
+mapper.identity=MYSQL
+#修改日志级别------debug: 有的没的都打印
+logging.level.root=info
+```
+
+**启动类添加注解：**
+
+```java
+@SpringBootApplication
+@MapperScan(basePackages = "com.meituan.finance.mapper")
+public class FinanceTestApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(FinanceTestApplication.class, args);
+    }
+}
+```
+
+
+
+**常用注解：**
+
+- 1、@Table：建立实体类和数据库表之间的对应关系
+
+  **默认通用mapper是开启驼峰命名的**，但有时，实体类名和表名并不只是驼峰转下划线的形式，所以要使用这个注解的name属性来指定：@Table(name = "xxx_xxx")
+
+- 2、@Column：建立实体类字段和数据库表字段之间的对应关系
+
+- 3、@Id：需要在实体类的主键上添加这个注解来告诉通用mapper这个字段是主键。
+
+- 4、@GeneratedValue：——主键生成策略。作用是让通用 Mapper 在执行 insert 操作之后将数据库自动生成的主键值回写到实体类对象中。 通常和`@Id`注解一起使用。
+
+  ```java
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer empId;
+  ```
+
+- 5、@KeySql注解：主键策略注解，用于配置如何生成主键。
+
+  这是通用 Mapper 的自定义注解，改注解的目的就是替换 `@GeneratedValue` 注解。
+
+- 6、@Transient注解：用于标记不与数据库表字段对应的实体类字段 。
+
+
+
+**几个方法：**
+
+- 1、insertSelective：新增除了主键的非空值
+- 2、批量插入：继承接口`InsertListMapper`
+- 3、使用`tk.mybatis.mapper.additional.idlist.IdListMapper`就可以实现批量查询和删除。
 
 
 
@@ -3805,7 +4095,25 @@ Dao 接口里的方法可以重载，但是Mybatis的XML里面的ID不允许重�
 
 ## 6、MyBatis执行批量插入，能返回数据库主键列表吗？
 
-可以。
+——使用foreach实现迭代插入
+
+foreach元素的属性主要有 item，index，collection，open，separator，close。
+
+- item表示集合中每一个元素进行迭代时的别名
+
+- index指 定一个名字，用于表示在迭代过程中，每次迭代到的位置
+
+- open表示该语句以什么开始
+
+- separator表示在每次进行迭代之间以什么符号作为分隔符
+
+- close表示以什么结束
+
+- collection属性，必须指定的，主要有3种情况：
+
+  1.如果传入的是单参数且参数类型是一个List的时候，collection属性值为list
+  2.如果传入的是单参数且参数类型是一个array数组的时候，collection的属性值为array
+  3.如果传入的参数是多个的时候，我们就需要把它们封装成一个Map了，当然单参数也可以封装成map
 
 例如：在mapper.xml中插入内容：
 
@@ -3990,6 +4298,112 @@ MyBatis 将所有 **Xml 配置信息**都封装到 All-In-One 重量级对象 **
 
 
 
+## SpringBoot Controller从前端取参数的方式：
+
+```
+第一类：请求路径参数
+1、@PathVariable
+获取路径参数。即url/{id}这种形式。
+
+2、@RequestParam
+获取查询参数。即url?name=这种形式
+
+第二类：Body参数
+1、@RequestBody
+2、无注解
+
+第三类：请求头参数以及Cookie
+1、@RequestHeader
+2、@CookieValue
+```
+
+```java
+@GetMapping("/demo3")
+public void demo3(@RequestHeader(name = "myHeader") String myHeader,
+        @CookieValue(name = "myCookie") String myCookie) {
+    System.out.println("myHeader=" + myHeader);
+    System.out.println("myCookie=" + myCookie);
+}
+
+@GetMapping("/demo3")
+public void demo3(HttpServletRequest request) {
+    System.out.println(request.getHeader("myHeader"));
+    for (Cookie cookie : request.getCookies()) {
+        if ("myCookie".equals(cookie.getName())) {
+            System.out.println(cookie.getValue());
+        }
+    }
+}
+```
+
+-  1、直接把表单的参数写在**Controller相应的方法的形参**中
+
+  ```java 
+  public String addUser(String username,String password) {}
+  ```
+
+- 2、通过**HttpServletRequest**接收
+
+  ```java
+  public String addUser(HttpServletRequest request) {
+  ```
+
+- 3、通过一个**bean**来接收
+
+  ```java
+  public String addUser(UserModel user) {
+  ```
+
+- 4、通过**@PathVariable**获取路径中的参数，适用于GET请求
+
+  ```java
+  @RequestMapping(value="/addUser4/{username}/{password}",method=RequestMethod.GET)
+  public String addUser4(@PathVariable String username,@PathVariable String password) {
+    
+  http://localhost:8080/tools/addUser4/username=zhangsan/password=123
+  ```
+
+- 5、使用**@ModelAttribute注解**获取POST请求的FORM表单数据
+
+  ```java
+  @RequestMapping(value="/addUser",method=RequestMethod.POST)
+  public String addUser(@ModelAttribute("user") UserModel user) {
+  ```
+
+- 6、用**注解@RequestParam**绑定请求参数到方法入参  ——一般使用@RequestParam注解来接收HTTP请求参数
+
+  当请求参数username不存在时会有异常发生,可以通过设置属性required=false解决,
+
+  例如: **@RequestParam(value="username", required=false)**
+
+  ```java
+  @RequestMapping(value="/addUser",method=RequestMethod.GET)
+  public String addUser(@RequestParam("username") String username,@RequestParam("password") String password) {    
+  ```
+
+- 7、用**注解@RequestBody**绑定请求参数到方法入参 ， 用于POST请求
+
+  ```java
+  @RequestMapping(value="/addUser7",method=RequestMethod.POST)
+  public String addUser7(@RequestBody DemoUser user) {
+  ```
+
+- 8、用request.getQueryString() 获取spring MVC get请求的参数，只适用get请求
+
+  ```java
+  @RequestMapping(value="/addUser",method=RequestMethod.GET)
+  public String addUser(HttpServletRequest request) { 
+    System.out.println("username is:"+request.getQueryString()); 
+  	return "demo/index"; 
+  }
+  ```
+
+
+
+
+
+
+
 ## 0、Spring家族
 
 - Spring是一个轻量级的控制反转(IoC)和面向切面(AOP)的容器框架。Spring使你能够编写更干净、更可管理、并且更易于测试的代码。
@@ -4004,7 +4418,7 @@ MyBatis 将所有 **Xml 配置信息**都封装到 All-In-One 重量级对象 **
 
 **Spring和SpringMVC：**
 
-Spring是一个一站式的轻量级的java开发框架，核心是控制反转（IOC）和面向切面（AOP），针对于开发的WEB层(springMvc)、业务层(Ioc)、持久层(jdbcTemplate)等都提供了多种配置解决方案；
+Spring是一个一站式的轻量级的java开发框架，核心是控制反转（IOC）和面向切面（AOP），针对于开发的WEB层(springMVC)、业务层(Ioc)、持久层(jdbcTemplate)等都提供了多种配置解决方案；
 
 SpringMVC是Spring基础之上的一个MVC框架，主要处理web开发的路径映射和视图渲染，属于Spring框架中WEB层开发的一部分；
 
