@@ -70,44 +70,44 @@ byte : 字节，计算机存储数据的基本单位，一个字节由8位二进
 | protected | 支持   | 支持   | 支持   | 不支持 |
 | public    | 支持   | 支持   | 支持   | 支持   |
 
-public：更多得在写公共方法会使用到。
+public：在写公共方法会使用到。
 
-private：在类中有些私有得方法会用到但是比较少，一般是在变量私有，使用get，set方法时，会配合public一起使用。
+private：在类中有些私有的方法会用到但是比较少，一般是在变量私有，使用get，set方法时，会配合public一起使用。
 
-default：在不写修饰符得情况下，默认为default修饰符。另外有个特殊的点，就是接口的方法不写修饰符，默认是public。而不是default
+default：在不写修饰符的情况下，默认为default修饰符。另外有个特殊的点，就是接口的方法不写修饰符，默认是public。而不是default
 
-protected：保护，更多得是用于框架层啦，就是子类得引用支持，像封装了struts。在controller层就必须继承某一个类一样。
+protected：保护，更多的是用于框架层啦，就是子类的引用支持，像封装了struts。在controller层就必须继承某一个类一样。
 
 **2、继承：**
 
-继承是使⽤已存在的类的定义作为基础建立新类的技术，新类的定义可以增加新的数据或新的功能，也可以用父类的功能，但不能选择性地继承父类。通过使用继承可以更方便地复用之前的代码。
+继承是使⽤已存在的类的定义作为基础建立新类的技术，新类的定义可以增加新的数据或新的功能，也可以用父类的功能，但**不能选择性地继承父类**。通过使用继承可以更方便地复用之前的代码。
 
 ```
 关于继承如下 3 点请记住：
 	1. 子类拥有⽗类对象所有的属性和方法（包括私有属性和私有方法），但是⽗类中的私有属性和方法子类无法访问，只是拥有。
 	2. 子类可以对父类进行扩展，拥有自己的属性和方法。
-	3. 子类可以自己的方式实现父类的方法。
+	3. 子类可以以自己的方式实现父类的方法。
 ```
 
 **3、多态：**
 
-​	多态就是指程序中定义的引用变量所指向的具体类型和通过该引用变量发出的方法调用在编程时并不确定，而是在程序运行期间才确定，即⼀个引⽤变量到底会指向哪个类的实例对象，该引⽤变量发出的方法调用到底是哪个类中实现的⽅法，必须在由程序运⾏期间才能决定。
+​	多态就是指**程序中定义的引用变量所指向的具体类型和通过该引用变量发出的方法调用在编程时并不确定，而是在程序运行期间才确定**，即**一个引⽤变量到底会指向哪个类的实例对象**，该引用变量发出的方法调用到底是哪个类中实现的方法，必须在由**程序运行期间**才能决定。
 ​	在 Java 中有两种形式可以实现多态：继承（多个子类对同一方法进行重写）和接口（实现接口并覆盖接口中同一方法）。  
 
 
 
 ## 1、缓存池
 
-new Integer(123) 每次都会新建一个对象；
-Integer.valueOf(123) 会使用缓存池中的对象，多次调用会取得同一个对象的引用。
+- new Integer(123) 每次都会新建一个对象；
+- Integer.valueOf(123) 会使用缓存池中的对象，多次调用会取得同一个对象的引用。 
 
 ## 2、String 
 
-String声明为final 不可被继承，Integer包装类等也不能被继承
+**String声明为final 不可被继承，Integer包装类等也不能被继承**
 String源码：Java8内部使用char数组存储数据，Java9之后使用byte数组存储，coder表示编码类型
 
-String源码中value数组被声明为final，value数组在初始化之后不能引用其他数组。
-String内部没有改变value数组的方法，可保证String不可变。
+**String源码中value数组被声明为final，value数组在初始化之后不能引用其他数组。**
+**String内部没有改变value数组的方法，可保证String不可变。**
 
 ## 3、final关键字
 
@@ -194,9 +194,9 @@ Java 的参数是以值传递的形式传入方法中，而不是引用传递。
 然而在 Java 中，没有引用的概念，Java 中只要定义变量就会开辟一个存储单元。因此，对 Java 语言来说只有值传递，没有引用传递是正确的。 
 ```
 
-**值传递：**指在调用函数时将实际参数复制一份传递到函数中，这样在函数中如果对参数进行修改，将不会影响到实际参数。
-引用传递：是指在调用函数时将实际参数的地址直接传递到函数中(的形参)，那么在函数中对参数所进行的修改，将影响到实际参数。
-引用传递：形参为指向实参地址的指针，当对形参的指向操作时，就相当于对实参本身进行的操作。 
+- **值传递：**指在调用函数时将实际参数复制一份传递到函数中，这样在函数中如果对参数进行修改，将不会影响到实际参数。
+- **引用传递**：是指在调用函数时将实际参数的地址直接传递到函数中(的形参)，那么在函数中对参数所进行的修改，将影响到实际参数。
+  引用传递：形参为指向实参地址的指针，当对形参的指向操作时，就相当于对实参本身进行的操作。  
 
 
 ## 9、字面量
@@ -655,13 +655,13 @@ throws 关键字用在方法签名处，用来标识该方法可能抛出的异�
 	2、指令级并行重排序。现代处理器采用了指令级并行技术来将多条指令重叠执行。如果不存在数据依赖性，处理器可以改变语句对应机器指令的执行顺序。
 	3、内存系统重排序。由于处理器使用缓存和读 / 写缓冲区，这使得加载和存储操作看上去可能是在乱序执行。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210330171611977.png)
+![在这里插入图片描述](Java笔记.assets\重排序顺序.png)
 
 为了实现volatile内存可见性，JMM会限制特定类型的编译器和处理器重排序。
 Java 编译器在生成字节码时，会**在指令序列中插入内存屏障指令**来禁止特定类型的处理器重排序。
 **内存屏障**是一组处理器指令，它的作用是禁止指令重排序和解决内存可见性的问题。
 指令重排序时不能把后面的指令重排序到内存屏障之前的位置
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210330172514676.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\内存屏障.png)
 
 
 
@@ -672,7 +672,7 @@ JMM 定义了线程和主内存之间的抽象关系：线程之间的共享变�
 每个线程有自己的工作内存，保存共享变量的副本。
 线程对变量的读写操作都是对自己的工作内存中操作，不能直接读写主内存中变量。
 不同线程之间也不能直接访问对方工作内存中的变量，线程间变量的值传递需要通过主内存中转完成。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210330163011395.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\JMM可见性.png)
 
 因此多线程下共享变量的可见性存在问题---解决：**使用synchronized加锁**、**使用volatile关键字**
 1、**加锁**：进入synchronized同步代码块后，线程获得锁，会清空本地内存，然后从主内存中拷贝共享变量的最新值到本地内存作为副本。之后将修改后的副本值刷新到主内存，最后线程释放锁。
@@ -689,7 +689,7 @@ JMM 定义了线程和主内存之间的抽象关系：线程之间的共享变�
 
 	每个处理器通过监听在总线上传播的数据来检查自己的缓存值是不是过期了，如果处理器发现自己缓存行对应的内存地址修改，就会从将当前处理器的缓存行设置无效状态，当处理器对这个数据进行修改操作时，会重新从主内存中把数据读到CPU缓存中。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210330165555765.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\嗅探机制.png)
 
 
 
@@ -703,7 +703,7 @@ JMM 定义了线程和主内存之间的抽象关系：线程之间的共享变�
 
 ## 1、概述
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210305160419419.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](Java笔记.assets\集合框架图.png)
 **Collection：存储对象的集合**
 ![在这里插入图片描述](Java笔记.assets/20210305153101672.png)
 	
@@ -747,7 +747,6 @@ JMM 定义了线程和主内存之间的抽象关系：线程之间的共享变�
 	
 
 ### Iterator：
-
 
 ![在这里插入图片描述](Java笔记.assets/20210305164840850.png)
 Collection 继承了 Iterable 接口，其中的 iterator() 方法能够产生一个 Iterator 对象，通过这个对象就可以迭代遍历 Collection 中的元素。
@@ -1102,7 +1101,7 @@ public class LinkedList<E> extends AbstractSequentialList<E>
 
 ```
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/2021030522382618.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\LinkedList存储结构.png)
 LinkedList基于双向链表Deque实现，使用Node--存放每个节点的prev和next节点--存储链表节点信息。
 每个LinkedList存储first和last指针。
 
@@ -1499,7 +1498,7 @@ static final int tableSizeFor(int cap) {
 		1、TREEIFY_THRESHOLD 用于判断是否需要将链表转换为红黑树的阈值。
 		2、HashEntry 修改为 Node，存放的仍为 key value hashcode next 等数据。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210306224336762.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\HashMap-JDK1.8.png)
 
 ### 1、put方法
 
