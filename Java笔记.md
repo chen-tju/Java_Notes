@@ -70,44 +70,44 @@ byte : 字节，计算机存储数据的基本单位，一个字节由8位二进
 | protected | 支持   | 支持   | 支持   | 不支持 |
 | public    | 支持   | 支持   | 支持   | 支持   |
 
-public：更多得在写公共方法会使用到。
+public：在写公共方法会使用到。
 
-private：在类中有些私有得方法会用到但是比较少，一般是在变量私有，使用get，set方法时，会配合public一起使用。
+private：在类中有些私有的方法会用到但是比较少，一般是在变量私有，使用get，set方法时，会配合public一起使用。
 
-default：在不写修饰符得情况下，默认为default修饰符。另外有个特殊的点，就是接口的方法不写修饰符，默认是public。而不是default
+default：在不写修饰符的情况下，默认为default修饰符。另外有个特殊的点，就是接口的方法不写修饰符，默认是public。而不是default
 
-protected：保护，更多得是用于框架层啦，就是子类得引用支持，像封装了struts。在controller层就必须继承某一个类一样。
+protected：保护，更多的是用于框架层啦，就是子类的引用支持，像封装了struts。在controller层就必须继承某一个类一样。
 
 **2、继承：**
 
-继承是使⽤已存在的类的定义作为基础建立新类的技术，新类的定义可以增加新的数据或新的功能，也可以用父类的功能，但不能选择性地继承父类。通过使用继承可以更方便地复用之前的代码。
+继承是使⽤已存在的类的定义作为基础建立新类的技术，新类的定义可以增加新的数据或新的功能，也可以用父类的功能，但**不能选择性地继承父类**。通过使用继承可以更方便地复用之前的代码。
 
 ```
 关于继承如下 3 点请记住：
 	1. 子类拥有⽗类对象所有的属性和方法（包括私有属性和私有方法），但是⽗类中的私有属性和方法子类无法访问，只是拥有。
 	2. 子类可以对父类进行扩展，拥有自己的属性和方法。
-	3. 子类可以自己的方式实现父类的方法。
+	3. 子类可以以自己的方式实现父类的方法。
 ```
 
 **3、多态：**
 
-​	多态就是指程序中定义的引用变量所指向的具体类型和通过该引用变量发出的方法调用在编程时并不确定，而是在程序运行期间才确定，即⼀个引⽤变量到底会指向哪个类的实例对象，该引⽤变量发出的方法调用到底是哪个类中实现的⽅法，必须在由程序运⾏期间才能决定。
+​	多态就是指**程序中定义的引用变量所指向的具体类型和通过该引用变量发出的方法调用在编程时并不确定，而是在程序运行期间才确定**，即**一个引⽤变量到底会指向哪个类的实例对象**，该引用变量发出的方法调用到底是哪个类中实现的方法，必须在由**程序运行期间**才能决定。
 ​	在 Java 中有两种形式可以实现多态：继承（多个子类对同一方法进行重写）和接口（实现接口并覆盖接口中同一方法）。  
 
 
 
 ## 1、缓存池
 
-new Integer(123) 每次都会新建一个对象；
-Integer.valueOf(123) 会使用缓存池中的对象，多次调用会取得同一个对象的引用。
+- new Integer(123) 每次都会新建一个对象；
+- Integer.valueOf(123) 会使用缓存池中的对象，多次调用会取得同一个对象的引用。 
 
 ## 2、String 
 
-String声明为final 不可被继承，Integer包装类等也不能被继承
+**String声明为final 不可被继承，Integer包装类等也不能被继承**
 String源码：Java8内部使用char数组存储数据，Java9之后使用byte数组存储，coder表示编码类型
 
-String源码中value数组被声明为final，value数组在初始化之后不能引用其他数组。
-String内部没有改变value数组的方法，可保证String不可变。
+**String源码中value数组被声明为final，value数组在初始化之后不能引用其他数组。**
+**String内部没有改变value数组的方法，可保证String不可变。**
 
 ## 3、final关键字
 
@@ -194,9 +194,9 @@ Java 的参数是以值传递的形式传入方法中，而不是引用传递。
 然而在 Java 中，没有引用的概念，Java 中只要定义变量就会开辟一个存储单元。因此，对 Java 语言来说只有值传递，没有引用传递是正确的。 
 ```
 
-**值传递：**指在调用函数时将实际参数复制一份传递到函数中，这样在函数中如果对参数进行修改，将不会影响到实际参数。
-引用传递：是指在调用函数时将实际参数的地址直接传递到函数中(的形参)，那么在函数中对参数所进行的修改，将影响到实际参数。
-引用传递：形参为指向实参地址的指针，当对形参的指向操作时，就相当于对实参本身进行的操作。 
+- **值传递：**指在调用函数时将实际参数复制一份传递到函数中，这样在函数中如果对参数进行修改，将不会影响到实际参数。
+- **引用传递**：是指在调用函数时将实际参数的地址直接传递到函数中(的形参)，那么在函数中对参数所进行的修改，将影响到实际参数。
+  引用传递：形参为指向实参地址的指针，当对形参的指向操作时，就相当于对实参本身进行的操作。  
 
 
 ## 9、字面量
@@ -655,13 +655,13 @@ throws 关键字用在方法签名处，用来标识该方法可能抛出的异�
 	2、指令级并行重排序。现代处理器采用了指令级并行技术来将多条指令重叠执行。如果不存在数据依赖性，处理器可以改变语句对应机器指令的执行顺序。
 	3、内存系统重排序。由于处理器使用缓存和读 / 写缓冲区，这使得加载和存储操作看上去可能是在乱序执行。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210330171611977.png)
+![在这里插入图片描述](Java笔记.assets\重排序顺序.png)
 
 为了实现volatile内存可见性，JMM会限制特定类型的编译器和处理器重排序。
 Java 编译器在生成字节码时，会**在指令序列中插入内存屏障指令**来禁止特定类型的处理器重排序。
 **内存屏障**是一组处理器指令，它的作用是禁止指令重排序和解决内存可见性的问题。
 指令重排序时不能把后面的指令重排序到内存屏障之前的位置
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210330172514676.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\内存屏障.png)
 
 
 
@@ -672,7 +672,7 @@ JMM 定义了线程和主内存之间的抽象关系：线程之间的共享变�
 每个线程有自己的工作内存，保存共享变量的副本。
 线程对变量的读写操作都是对自己的工作内存中操作，不能直接读写主内存中变量。
 不同线程之间也不能直接访问对方工作内存中的变量，线程间变量的值传递需要通过主内存中转完成。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210330163011395.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\JMM可见性.png)
 
 因此多线程下共享变量的可见性存在问题---解决：**使用synchronized加锁**、**使用volatile关键字**
 1、**加锁**：进入synchronized同步代码块后，线程获得锁，会清空本地内存，然后从主内存中拷贝共享变量的最新值到本地内存作为副本。之后将修改后的副本值刷新到主内存，最后线程释放锁。
@@ -689,7 +689,7 @@ JMM 定义了线程和主内存之间的抽象关系：线程之间的共享变�
 
 	每个处理器通过监听在总线上传播的数据来检查自己的缓存值是不是过期了，如果处理器发现自己缓存行对应的内存地址修改，就会从将当前处理器的缓存行设置无效状态，当处理器对这个数据进行修改操作时，会重新从主内存中把数据读到CPU缓存中。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210330165555765.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\嗅探机制.png)
 
 
 
@@ -703,7 +703,7 @@ JMM 定义了线程和主内存之间的抽象关系：线程之间的共享变�
 
 ## 1、概述
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210305160419419.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](Java笔记.assets\集合框架图.png)
 **Collection：存储对象的集合**
 ![在这里插入图片描述](Java笔记.assets/20210305153101672.png)
 	
@@ -747,7 +747,6 @@ JMM 定义了线程和主内存之间的抽象关系：线程之间的共享变�
 	
 
 ### Iterator：
-
 
 ![在这里插入图片描述](Java笔记.assets/20210305164840850.png)
 Collection 继承了 Iterable 接口，其中的 iterator() 方法能够产生一个 Iterator 对象，通过这个对象就可以迭代遍历 Collection 中的元素。
@@ -1102,7 +1101,7 @@ public class LinkedList<E> extends AbstractSequentialList<E>
 
 ```
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/2021030522382618.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\LinkedList存储结构.png)
 LinkedList基于双向链表Deque实现，使用Node--存放每个节点的prev和next节点--存储链表节点信息。
 每个LinkedList存储first和last指针。
 
@@ -1413,7 +1412,7 @@ void transfer(Entry[] newTable) {
 }
 ```
 
-![在这里插入图片描述](Java笔记.assets/20210322151439535.png)
+ ![在这里插入图片描述](Java笔记.assets/20210322151439535.png)
 
 扩容操作同样需要把 oldTable 的所有键值对重新插入 newTable 中，因此这一步是很费时的。
 
@@ -1458,7 +1457,7 @@ HashMap 使用 hash%capacity 来确定桶下标。HashMap capacity 为 2 的 n �
 		newTable[i] = e;    <—— 线程2执行这行代码， newTable[i] 指向节点a
 		e = next;
 
-![在这里插入图片描述](Java笔记.assets/20210322151958752.png)
+ ![在这里插入图片描述](Java笔记.assets/20210322151958752.png)
 
 **jdk1.8中进行的改进：**
 
@@ -1499,13 +1498,12 @@ static final int tableSizeFor(int cap) {
 		1、TREEIFY_THRESHOLD 用于判断是否需要将链表转换为红黑树的阈值。
 		2、HashEntry 修改为 Node，存放的仍为 key value hashcode next 等数据。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210306224336762.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](Java笔记.assets\HashMap-JDK1.8.png)
 
 ### 1、put方法
 
 ```java
-    final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
-                   boolean evict) {
+    final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
         if ((tab = table) == null || (n = tab.length) == 0)//判断当前桶是否为空，如果桶是空的需要初始化
             n = (tab = resize()).length;//----在resize方法中会判断是否进行初始化
@@ -2221,7 +2219,7 @@ public final class ConcurrentCache<K, V> {
 JDK1.7 的 ConcurrentHashMap 底层采⽤ **分段的数组+链表** 实现， JDK1.8采⽤的数据结构跟 HashMap1.8 的结构⼀样，**数组+链表/红黑树**。
 Hashtable 和JDK1.8 之前的 HashMap 的底层数据结构类似都是采⽤ **数组+链表** 的形式，数组是HashMap 的主体，链表则是主要为了解决哈希冲突⽽存在的；
 
-**2、实现线程安全的⽅式：**
+**2、实现线程安全的方式：**
  ① 在 JDK1.7 的时候， ConcurrentHashMap （**分段锁**）对整个桶数组进⾏了分割分段( Segment )，每⼀把锁只锁容器其中⼀部分数据，多线程访问容器⾥不同数据段的数据，就不会存在锁竞争，提⾼并发访问率。
 到了 JDK1.8 的时候已经摒弃了 Segment 的概念，⽽是直接⽤ **Node 数组+链表+红⿊树**的数据结构来实现，并发控制使⽤ **synchronized 和 CAS** 来操作。（JDK1.6 以后 对 synchronized 锁做了很多优化） 整个看起来就像是优化过且线程安全的 HashMap ，虽然在 JDK1.8 中还能看到Segment 的数据结构，但是已经简化了属性，只是为了兼容旧版本；
 ② Hashtable (同⼀把锁) :使⽤ **synchronized** 来保证线程安全，效率⾮常低下。当⼀个线程访问同步⽅法时，其他线程也访问同步⽅法，可能会进⼊阻塞或轮询状态，如使⽤ put 添加元素，另⼀个线程不能使⽤ put 添加元素，也不能使⽤ get，竞争会越来越激烈效率越低。
@@ -2238,16 +2236,11 @@ Hashtable 和JDK1.8 之前的 HashMap 的底层数据结构类似都是采⽤ **
 
 ## 一、运行时数据区域/Java内存区域
 
-### JDK1.8：
 
-与之前的最大区别是：**元数据区取代了永久代。**
-**元数据区不在虚拟机中，而是使用本地内存。**
-**方法区是一个JVM规范，永久代与元数据区本质上都是方法区的实现。**
 
-JDK1.8之后，原来永久代的数据被分到堆和元空间中。**元空间存储类的元信息**，**堆中存放静态变量和常量池等。**
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210330202230868.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ### JDK 1.6
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210308210812937.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ <img src=".\Java笔记.assets\运行时数据区域.png" alt="在这里插入图片描述" style="zoom: 67%;" />
 
 **面试题：程序计数器、虚拟机栈、本地方法栈为什么是私有的？**
 
@@ -2265,13 +2258,16 @@ JDK1.8之后，原来永久代的数据被分到堆和元空间中。**元空间
 
 记录正在执行的**虚拟机字节码指令的地址**，如果正在执行的是本地方法则记录的是 **undefined 地址**。
 
-注意：程序计数器是唯一一个不会出现OOM的内存区域，与线程同生共死。
+注意：**程序计数器是唯一一个不会出现OOM的内存区域，与线程同生共死。**
 
 
 
 **递归或者异常时，程序计数器是怎样的？**
 
+- 比如某个线程递归调用，随着调用层次的加深，可能会出现栈空间不足的情况，这时候如果可以动态扩增，jvm就会申请更多的内存空间来扩充栈，当没有更多的内存空间得以申请的时候，就会发生OutOfMemoryError。 
 
+- 但是，程序计数器仅仅只是一个运行指示器，它所需要存储的内容**仅仅就是下一个需要待执行的命令的地址**，无论代码有多少，最坏情况下死循环也不会让这块内存区域超限，因为程序计算器所维护的就是下一条待执行的命令的地址，所以不存在OutOfMemoryError
+  
 
 ### 2、Java虚拟机栈
 
@@ -2280,10 +2276,10 @@ Java虚拟机栈是**Java方法执行的内存模型**，栈中存放栈帧，�
 
 栈是**线程私有的**，就是说线程之间的栈是隔离的；当程序中某个线程开始执行一个方法时就会相应地创建一个栈帧并且入栈，位于栈顶，方法结束后，栈帧出栈。
 栈帧用于存储**局部变量表、操作数栈、常量池引用**等信息。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210308211914498.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\虚拟机栈.png)
 栈帧：是用于支持虚拟机进行方法调用和方法执行的数据结构，是虚拟机运行时数据区中的虚拟机栈的栈元素。
 每个栈帧中包括：
-	1、局部变量表：用来**存储方法中的局部变量**（非静态变量、函数形参）。
+	1、局部变量表：用来**存储方法中的局部变量**（非静态变量、函数形参)。
 		变量为基本数据类型时，直接存储**值**；变量为引用类型时，存储指向**具体对象的引用**。
 	2、操作数栈：Java虚拟机的解释执行引擎--基于栈的执行引擎，栈即是操作数栈。
 	3、指向运行时常量池的引用：存储程序执行时可能用到常量的引用。
@@ -2334,21 +2330,31 @@ java -Xms1M -Xmx2M HackTheJava
 方法区是一块所有**线程共享**的**内存逻辑区域**，JVM中只有一个方法区，用来存储一些线程可共享内容。
 是**线程安全**的，多个线程同时访问方法区中同一个内容时，只能有一个线程装载该数据，其他线程只能等待。
 
-方法区可存储的内容有：类的全路径名、类的直接超类的全限定名、类的访问修饰符、类的类型(类或接口)、类的直接接口全限定名的有序列表、常量池(字段，方法信息，静态变量，类型引用(class))等。
+**方法区可存储的内容有**：类的全路径名、类的直接超类的全限定名、类的访问修饰符、类的类型(类或接口)、类的直接接口全限定名的有序列表、常量池(字段，方法信息，静态变量，类型引用(class))等。
 
 用于存放**已被加载的类信息、常量、静态变量、即时编译器编译后的代码**等。
 
-
 和堆一样**不需要连续的内存**，可以动态扩展，动态扩展失败一样会抛出 OutOfMemoryError 异常。
-对这块区域垃圾回收的主要目标是对常量池的回收和对类的卸载，但是一般难以实现。
+对这块区域垃圾回收的**主要目标是对常量池的回收和对类的卸载，但是一般难以实现**。
 
-HotSpot 虚拟机把它当成永久代来进行垃圾回收。但很难确定永久代的大小，因为它受到很多因素影响，并且每次 Full GC 之后永久代的大小都会改变，所以经常会抛出 OutOfMemoryError 异常。
+HotSpot 虚拟机把它当成**永久代**来进行垃圾回收。但**很难确定永久代的大小**，因为它受到很多因素影响，并且每次 Full GC 之后永久代的大小都会改变，所以经常会抛出 OutOfMemoryError 异常。
 
 为了更容易管理方法区，从 **JDK 1.8 开始，移除永久代，并把方法区移至元空间**，它位于本地内存中，而不是虚拟机内存中。
 **方法区是一个JVM规范，永久代与元空间都是一种实现方式。**
 JDK1.8之后，原来永久代的数据被分到堆和元空间中。**元空间存储类的元信息、运行时常量池、**，**堆中存放静态变量和常量池、字符串常量池等。**
 
-![image-20210410093846377](Java笔记.assets/image-20210410093846377.png)
+ ![image-20210410093846377](Java笔记.assets/image-20210410093846377.png)
+
+
+
+### JDK1.8：
+
+与之前的最大区别是：**元数据区取代了永久代。**
+**元数据区不在虚拟机中，而是使用本地内存。**
+**方法区是一个JVM规范，永久代与元数据区本质上都是方法区的实现。**
+
+JDK1.8之后，原来永久代的数据被分到堆和元空间中。**元空间存储类的元信息**，**堆中存放静态变量和常量池等。**
+ ![在这里插入图片描述](.\Java笔记.assets\JDK1.8内存模型.png)
 
 ### 面试题：为什么要将永久代替换为元空间？
 
@@ -2392,7 +2398,7 @@ JDK1.4中新引入了NIO类，可以使用**Native函数库直接分配堆外内
 
 存在问题：跨代引用是极少的，为了找到一点点跨代引用，需要遍历整个老年代。
 
-解决方案：记忆集、卡表
+**解决方案：记忆集、卡表**
 
 **记忆集**就是用来记录跨代引用的表，通过引入记忆集避免遍历老年代。以YGC为例说明，要回收年轻代，只需要引用年轻代对象的GC ROOT+记忆集，就可以判断出Young区对象是否存活，不必再遍历老年代。
 
@@ -2404,7 +2410,7 @@ JDK1.4中新引入了NIO类，可以使用**Native函数库直接分配堆外内
 
 运⾏时常量池主要回收的是废弃的常量。
 
-假如在常量池中存在字符串 "abc"，如果当前没有任何String对象引⽤该字符串常量的话，就说明常量 "abc" 就是废弃常量，如果这时发⽣内存回收的话⽽且有必要的话， "abc" 就会被系统清理出常量池。
+假如在常量池中存在字符串 "abc"，如果当前**没有任何String对象引⽤该字符串常量的话**，就说明常量 "abc" 就是废弃常量，如果这时发⽣内存回收的话⽽且有必要的话， "abc" 就会被系统清理出常量池。
 
 ### 1、判断一个对象是否可被回收
 
@@ -2419,20 +2425,23 @@ JDK1.4中新引入了NIO类，可以使用**Native函数库直接分配堆外内
 #### 2、可达性分析算法
 
 以**GC Roots为起始点**进行搜索，**可达的对象都是存活**的，不可达的对象可被回收。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309143003539.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
-Java虚拟机使用可达性分析算法判断对象是否可被回收。
+ ![在这里插入图片描述](.\Java笔记.assets\可达性分析算法.png)
+**Java虚拟机使用可达性分析算法判断对象是否可被回收。**
 
 ##### **GC Roots**一般包含：
 
-```
 (两栈两方法)
-1、虚拟机栈中局部变量表中引用的对象
-2、本地方法栈中 JNI (Java 本地接口)中引用的对象--程序中native本地方法引用的对象
-3、方法区中类静态属性引用的对象--类中使用的static声明的引用类型字段
-4、方法区中的常量引用的对象--在类中使用final声明的引用类型字段
-```
 
-**GC管理的主要区域是堆，一般情况下只针对堆进行垃圾回收。方法区、线程私有的Java虚拟机栈及本地方法栈不被 GC 所管理，因而选择这些区域内的对象作为GC roots,被GC roots引用的对象不被GC回收。**
+- 1、**虚拟机栈中局部变量表中引用的对象**
+- 2、**本地方法栈中 JNI (Java 本地接口)中引用的对象**--程序中native本地方法引用的对象
+- 3、**方法区中类静态属性引用的对象**--类中使用的**static**声明的引用类型字段
+- 4、**方法区中的常量引用的对象**--在类中使用**final**声明的引用类型字段
+
+**原因：**
+
+**GC管理的主要区域是堆，一般情况下只针对堆进行垃圾回收。**
+
+**方法区、线程私有的Java虚拟机栈及本地方法栈不被 GC 所管理，因而选择这些区域内的对象作为GC roots,被GC roots引用的对象不被GC回收。**
 
 
 
@@ -2524,15 +2533,15 @@ obj = null;
 
 #### 1、标记-清除
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309152136133.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\标记清除.png)
 
 在**标记阶段**，程序会检查每个对象是否为活动对象，若是活动对象则程序会在对象头部打上标记。
 
 在**清除阶段**，会进行对象回收并取消标志位。
 另外，还会判断回收后的分块与前一个空闲分块是否连续；若连续，会合并这两个分块。
-回收对象就是把对象作为分块，连接到被称为 “空闲链表” 的单向链表，之后进行分配时只需遍历这个空闲链表，就可找到分块。
+*回收对象就是把对象作为分块，连接到被称为 **“空闲链表”** 的单向链表，之后进行分配时只需遍历这个空闲链表，就可找到分块。*
 
-在分配时，程序会搜索空闲链表寻找空间大于等于新对象大小size的块block。
+在分配时，程序会搜索空闲链表寻找空间**大于等于**新对象大小size的块block。
 如果它找到的块等于 size，会直接返回这个分块；如果找到的块大于 size，会将块分割成大小为 size 与 (block - size) 的两部分，返回大小为 size 的分块，并把大小为 (block - size) 的块返回给空闲链表。
 
 不足：
@@ -2541,7 +2550,7 @@ obj = null;
 
 #### 2、标记-整理
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309154316329.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\标记整理.png)
 
 **让所有存活的对象都向一端移动，然后直接清理掉边界以外的内存**。
 
@@ -2550,7 +2559,7 @@ obj = null;
 
 #### 3、复制
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309154511889.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\复制算法.png)
 将**内存划分为大小相等的两块**，**每次只使用其中一块**，当这一块内存用完了就**将还存活的对象复制到另一块上面**，然后再把使用过的内存空间进行一次清理。
 
 主要不足是：**只使用了内存的一半**
@@ -2581,7 +2590,7 @@ obj = null;
 
 一般将堆分为新生代和老年代。
 **新生代使用：复制算法**--每次收集都有大量对象死去
-**老年代使用：标记-清除算法 或者 标记-整理算法**--存活对象多
+**老年代使用： 标记-整理算法**--存活对象多
 
 **为什么新生代采用复制算法，老年代采用标整算法？**
 
@@ -2596,9 +2605,9 @@ obj = null;
 
 ### 4、垃圾收集器
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309163605384.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\垃圾收集器.png)
 以上是HotSpot虚拟机中的7个垃圾收集器，连线表示可以配合使用。
-因为目前为止还没有完美的收集器出现，更没有万能的收集器，只是针对具体应用最合适的收集器，进行分代收集（新生代老年代）
+因为目前为止还没有完美的收集器出现，更没有万能的收集器，只是针对具体应用最合适的收集器，进行分代收集（新生代老年代)
 
 单线程与多线程：单线程指垃圾收集器只使用一个线程，多线程使用多个线程。
 串行与并行：
@@ -2607,7 +2616,7 @@ obj = null;
 
 #### 1、Serial收集器
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309170349535.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\serial.png)
 
 新生代：复制算法 + 老年代 ： 标记整理算法
 
@@ -2621,7 +2630,7 @@ Serial收集器以**串行**的方式执行。
 
 #### 2、Serial Old收集器
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309171835189.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](.\Java笔记.assets\serial Old.png)
 是**Serial收集器的老年代版本**，也是给Client场景下的虚拟机使用。
 
 如果用在Server场景下，有两大用途：
@@ -2630,7 +2639,7 @@ Serial收集器以**串行**的方式执行。
 
 #### 3、ParNew收集器
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309170829349.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](.\Java笔记.assets\ParNew.png)
 ParNew收集器是**Serial收集器的多线程版本**。
 
 是**Server场景下默认的新生代收集器**，除性能原因外，主要是因为除了Serial收集器，只有它**能与CMS收集器配合使用。**
@@ -2652,25 +2661,25 @@ ParNew收集器是**Serial收集器的多线程版本**。
 
 #### 5、Parallel Old收集器
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309172129499.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](.\Java笔记.assets\ParallelOld.png)
 是**Parallel Scavenge收集器的老年代版本。**
 
 在注重吞吐量及CPU资源敏感的场合，可以优先考虑Parallel Scavenge加Parallel Old收集器
 
 #### 6、CMS收集器
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309172357979.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\CMS.png)
 CMS(Concurrent Mark Sweep), **并发标记清除**，Mark Sweep 指的是标记 - 清除算法。
 
 四个流程：
 	**1、初始标记**：仅仅只是标记一下GC Roots能直接关联到的对象，速度快，需要停顿。
 	**2、并发标记**：进行GC Roots Tracing的过程，在整个回收过程中耗时最长，不需要停顿。
-	**3、重新标记**：为了修正并发标记期间因用户程序继续运作导致标记产生变动的那部分对象的标记记录，需要停顿。
+	**3、重新标记**：为了修正并发标记期间 *因用户程序继续运作导致标记产生变动* 的那部分对象的标记记录，需要停顿。
 	**4、并发清除**：不需要停顿。
 
 整个过程中耗时最长的并发标记和并发清除过程，收集器线程都可以与用户线程一起工作，不需要停顿。
 
-缺点：
+**缺点：**
 	1、**吞吐量低**：停顿时间低是以牺牲吞吐量为代价的，导致CPU利用率不够高。
 	2、**无法处理浮动垃圾**，可能出现**Concurrent Mode Failure**。
 		**浮动垃圾**指**并发清除阶段由于用户线程继续运行而产生的垃圾**，这部分垃圾只能到下一次GC时才能进行回收。
@@ -2683,12 +2692,12 @@ CMS(Concurrent Mark Sweep), **并发标记清除**，Mark Sweep 指的是标记 
 
 G1(Garbage-First)，**面向服务端应用的垃圾收集器**，在**多CPU和大内存的场景下有很好的性能**。
 ---旨在未来替换掉CMS收集器
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309175417482.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](.\Java笔记.assets\HeapStructure.png)
 
-堆被分为新生代和老年代，其它收集器进行收集的范围都是整个新生代或者老年代，而G1可直接对新生代和老年代一起回收。
+堆被分为新生代和老年代，**其它收集器进行收集的范围都是整个新生代或者老年代，而G1可直接对新生代和老年代一起回收。**
 
 **G1收集器把堆划分成多个大小相等的独立区域(Region)，新生代和老年代不再物理隔离。**
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309175539157.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\G1.png)
 引入Region的概念，将原来的一整块内存空间划分成多个小空间，使每个小空间可以单独进行垃圾回收。
 
 使可预测的停顿时间模型成为可能--
@@ -2697,12 +2706,12 @@ G1(Garbage-First)，**面向服务端应用的垃圾收集器**，在**多CPU和
 每个Region都有一个**Remembered Set**，用于**记录该Region对象的引用对象所在的Region**。
 通过Remembered Set，**可达性分析的时候就可以避免全堆扫描**。----有路径压缩的感觉
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210309180158243.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\G1gc.png)
 
 如果不计算维护Remembered Set的操作， G1收集器可以分为以下步骤：
 	**1、初始标记**
 	**2、并发标记**
-	**3、最终标记：**为了修正在并发标记期间因用户程序继续运作而导致标记产生变动的那一部分标记记录，虚拟机将这段时间对象变化记录在线程的Remembered Set Logs里面，最终标记阶段需要将Remembered Set Logs的数据合并到Remembered Set中。这阶段需要停顿线程，但是可以并行执行。
+	**3、最终标记：**为了修正在并发标记期间因用户程序继续运作而导致标记产生变动的那一部分标记记录，**虚拟机将这段时间对象变化记录在线程的Remembered Set Logs里面**，最终标记阶段需要将Remembered Set Logs的数据合并到Remembered Set中。这阶段需要停顿线程，但是可以并行执行。
 	**4、筛选回收：**首先**对每个Region中的回收价值和成本进行排序，根据用户所期望的GC停顿时间来制定回收计划**。
 		此阶段也可做到与用户程序一起并发执行，但因为只回收一部分Region，时间是用户可控制的，而且停顿用户线程将大幅度提高收集效率。
 
@@ -2719,9 +2728,11 @@ region 大小和大对象很难保证一致，这会导致空间的浪费；特�
 
 ### 1、Minor GC和Full GC
 
-Minor GC： 回收新生代，因为新生代对象存活时间很短，因此Minor GC会频繁执行，执行的速度也一般比较快
+- Minor GC： 回收新生代，因为新生代对象存活时间很短，因此Minor GC会频繁执行，执行的速度也一般比较快
 
-Full GC：回收新生代和老年代，老年代对象存活时间长，因此Full GC很少执行，执行速度会比Minor GC慢很多
+- Full GC：回收新生代和老年代，老年代对象存活时间长，因此Full GC很少执行，执行速度会比Minor GC慢很多
+
+ps. >> 有Major GC的说法，看作回收老年代
 
 
 ### 2、内存分配策略---JVM调优
@@ -2750,7 +2761,7 @@ Full GC：回收新生代和老年代，老年代对象存活时间长，因此F
 
 ### 3、Full GC的触发条件
 
-*Minor GC触发条件：当Eden空间满时，将触发一次Minor GC。*
+**Minor GC触发条件：当Eden空间满时，将触发一次Minor GC。**
 
 Full GC的触发条件：
 
@@ -2780,7 +2791,7 @@ Full GC的触发条件：
 
 ## 面试题：Java对象的创建过程/new一个对象的过程？
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210331201314517.png)
+<img src=".\Java笔记.assets\创建对象的过程.png" alt="在这里插入图片描述" style="zoom:150%;" />
 
 **1、类加载检查**：首先检查这个指令的参数是否能在常量池中定位到这个类的符号引用，并且检查这符号引用代表的类是否已被加载、解析、验证、初始化，如果没有先执行类加载过程(class.forname())。
 **2、分配内存**：类加载检查通过后，虚拟机会为新生对象分配内存。主要有指针碰撞、空闲列表两种方式----由Java堆是否规整决定，Java堆是否规整由垃圾收集器采用的垃圾收集器是否带有压缩整理功能决定。
@@ -2802,19 +2813,18 @@ Full GC的触发条件：
 **4、设置对象头信息**：如所属类，元数据信息，哈希码，gc分代年龄，等等。
 **5、执行init()方法**：执行实例初始化代码，根据传入的属性值给对象属性赋值。--返回创建出来对象的引用。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210331205454140.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\new对象的过程.png)
 
 ## 面试题：对象的两种访问定位方式？
 
 Java程序通过栈上的Reference数据来操作堆上的具体对象。
 **1、句柄**：Java堆中将会划分出⼀块内存来作为句柄池， reference 中存储的就是对象的句柄地址，⽽句柄中包含了对象实例数据与类型数据各自的具体地址信息；
 优势：reference中存储稳定的句柄地址，对象被移动只需要改变句柄中的实例数据指针，reference本身不需要修改。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/2021033121005581.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
-
+ <img src=".\Java笔记.assets\句柄.png" alt="在这里插入图片描述" style="zoom:150%;" />
 
 **2、直接指针**：Java 堆对象的布局中就必须考虑如何放置访问类型数据的相关信息，而reference 中存储的直接就是对象的地址。
 优势：速度快，节省了一次指针定位的时间开销。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210331210108765.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ <img src=".\Java笔记.assets\直接指针.png" alt="在这里插入图片描述" style="zoom:150%;" />
 
 ## 四、类加载机制
 
@@ -2946,7 +2956,7 @@ public static void main(String[] args) {
 
 	1、两个方法的执行时机不同
 		init() 是对象构造器方法，程序在执行new一个对象调用该对象类的constructor方法时才会执行init()方法
-		clinit()时类构造器方法，jvm在执行类的  加载-验证-准备-解析-初始化  中的初始化阶段，jvm会调用clinit()方法。
+		clinit()是类构造器方法，jvm在执行类的 《 加载-验证-准备-解析-初始化 》中的初始化阶段，jvm会调用 clinit() 方法。
 		
 	2、两个方法的执行目的不同
 		init()是instance实例构造器，对非静态变量进行初始化
