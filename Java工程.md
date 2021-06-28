@@ -4093,7 +4093,7 @@ Dao 接口里的方法可以重载，但是Mybatis的XML里面的ID不允许重�
 
 
 
-## 6、MyBatis执行批量插入，能返回数据库主键列表吗？
+## 6、MyBatis执行批量插入，能返回数据库主键列表吗？——foreach
 
 ——使用foreach实现迭代插入
 
