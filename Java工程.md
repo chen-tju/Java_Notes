@@ -3791,7 +3791,9 @@ BaseExecutor成员变量之一的**PerpetualCache**，是对Cache接口最基本
 
 - 方式3：字符串拼接
 
-  AND name LIKE CONCAT(CONCAT('%',#{name},'%'))
+  ```
+  <if test="filter != null"> and `name` like CONCAT('%',#{filter},'%')  </if>
+  ```
 
 - 方式4：bind标签
 
