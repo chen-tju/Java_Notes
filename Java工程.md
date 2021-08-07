@@ -23,7 +23,7 @@
 
 
 
-#### 项目中RPC体现在哪？
+### 项目中RPC体现在哪？
 
 - Dubbo框架下，@Reference关键字实现分布式的远程服务对象的注入。 
 
@@ -163,11 +163,27 @@ spring-cloud的服务注册中心为spring-cloud netflix  Enruka，服务监控�
 
 
 
+> 在 Java 序列化期间，哪些变量未序列化？
+
+**序列化期间，静态变量（static修饰）和瞬态变量（transient修饰）未被序列化：**
+
+- 由于静态变量属于类，而不是对象，**序列化保存的是对象的状态，静态变量保存的是类的状态**。因此在 Java 序列化过程中不会保存它们。**注意：static修饰的变量是不可序列化，同时也不可串行化。**
+- 瞬态变量也不包含在 Java 序列化过程中, 并且不是对象的序列化状态的一部分。
+
+**如果有一个属性（字段）不想被序列化的，则该属性必须被声明为 `transient`**！
+
+- 一旦变量被transient修饰，变量将不再是对象持久化的一部分，该变量内容在序列化后无法被访问（如银行卡号、密码等不想用序列化机制保存）。
+- **transient关键字只能修饰变量，而不能修饰方法和类**。注意，本地变量是不能被transient关键字修饰的。变量如果是用户自定义类变量，则该类需要实现Serializable接口。
+
+
+
+
+
 ### 3、RPC
 
 [我的博客：RPC](https://blog.csdn.net/wang_chaochen/article/details/117066207)
 
-
+[RPC框架（技术总结）](https://www.jianshu.com/p/95952167a260)
 
 分布式的应用可以借助RPC来完成机器之间的调用。
 
@@ -264,6 +280,56 @@ B机器进行本地调用（通过代理Proxy）之后得到了返回值，此�
 
 
 
+### 数据交互为什么用 RPC，不用 HTTP？
+
+除 RPC 之外，常见的多系统数据交互方案还有分布式消息队列、HTTP 请求调用、数据库和分布式缓存等。**RPC 和 HTTP 调用是没有经过中间件的，它们是端到端系统的直接数据交互。**
+
+首先需要指正，这两个并不是并行概念。RPC 是一种**设计**，就是为了解决**不同服务之间的调用问题**，完整的 RPC 实现一般会包含有 **传输协议** 和 **序列化协议** 这两个。
+
+而 HTTP 是一种传输协议，RPC 框架完全可以使用 HTTP 作为传输协议，也可以直接使用 TCP，使用不同的协议一般也是为了适应不同的场景使用 TCP 和使用 HTTP 各有优势：
+
+**（1）传输效率**：
+
+- **TCP：通常自定义上层协议，可以让请求报文体积更小**
+- HTTP：如果是基于HTTP 1.1 的协议，请求中会包含很多无用的内容
+
+**（2）性能消耗**，主要在于序列化和反序列化的耗时
+
+- **TCP，可以基于各种序列化框架进行，效率比较高**
+- HTTP，大部分是通过 json 来实现的，字节大小和序列化耗时都要更消耗性能
+
+**（3）跨平台**：
+
+- TCP：通常要求客户端和服务器为统一平台
+- **HTTP：可以在各种异构系统上运行**
+
+**总结**：
+
+- RPC 的 TCP 方式主要用于公司内部的服务调用，性能消耗低，传输效率高。
+- HTTP主要用于对外的异构环境，浏览器接口调用，APP接口调用，第三方接口调用等。
+
+
+
+### 调用如何实现客户端无感（动态代理技术）? 与静态代理的区别。
+
+**静态代理：每个代理类只能为一个接口服务，这样会产生很多代理类。**普通代理模式，代理类Proxy的Java代码在JVM运行时就已经确定了，也就是**静态代理在编码编译阶段就确定了Proxy类的代码**。而**动态代理是指在JVM运行过程中，动态的创建一个类的代理类，并实例化代理对象。**
+
+JDK 动态代理是利用反射机制生成一个实现代理接口的匿名类，在调用业务方法前调用`InvocationHandler` 处理。代理类必须实现 `InvocationHandler` 接口，并且，JDK 动态代理只能代理实现了接口的类。
+
+> JDK 动态代理类基本步骤，如果想代理没有实现接口的对象？
+
+**JDK 动态代理类基本步骤：**
+
+- 编写需要被代理的类和接口
+- 编写代理类，需要实现 `InvocationHandler` 接口，重写 `invoke()` 方法；
+- 使用`Proxy.newProxyInstance(ClassLoader loader, Class<?>[] interfaces, InvocationHandler h)`动态创建代理类对象，通过代理类对象调用业务方法。
+
+CGLIB 框架实现了对无接口的对象进行代理的方式。JDK 动态代理是基于接口实现的，而 CGLIB 是基于继承实现的。它会**对目标类产生一个代理子类，通过方法拦截技术过滤父类的方法调用。代理子类需要实现 `MethodInterceptor` 接口。**
+
+**CGLIB 底层是通过 asm 字节码框架实时生成类的字节码，达到动态创建类的目的，效率较 JDK 动态代理低。**Spring 中的 AOP 就是基于动态代理的，如果被代理类实现了某个接口，Spring 会采用 JDK 动态代理，否则会采用 CGLIB。
+
+
+
 ## 1、并发查询问题：
 
 为了缓解数据库的压力，使用Redis缓存减轻数据库压力。
@@ -353,7 +419,21 @@ String OK = jedis.set("sku:" + skuId + ":lock", "token", "nx", "px", 10 * 1000);
          *-------- jedis本身无法实现多线程锁的机制
          * ------- synchronized () 只能解决本地的多线程并发问题
 
+ ![image-20210804214218949](.\Java工程.assets\redis-set命令.png)
+
+
+
+#### 常见分布式锁对比：
+
+ ![image-20210804213701899](.\Java工程.assets\分布式锁.png)
+
+
+
+
+
 ## 2、如何防止库存超卖？--数据库锁
+
+
 
 如何解决库存超卖现象？
 
@@ -2341,6 +2421,86 @@ IOC使原来需要我们new的对象，现在由Spring容器帮助创建管理�
 
 
 
+### 静态代理和动态代理：
+
+**静态代理** 就是按照代理模式书写的代码，其特点是代理类和目标类在代码中是确定的，因此称为静态。
+
+静态代理可以在不修改目标对象功能的前提下，对目标功能进行扩展。
+
+
+
+**动态代理** 也叫 JDK 代理或接口代理，有以下特点：
+
+- 代理对象不需要实现接口
+- 代理对象的生成是利用 JDK 的 API 动态的在内存中构建代理对象
+- 能在代码运行时动态地改变某个对象的代理，并且能为代理对象动态地增加方法、增加行为
+
+
+一般情况下，动态代理的底层不用我们亲自去实现，可以使用线程提供的 API 。例如，在 Java 生态中，目前普遍使用的是 JDK 自带的代理和 CGLib 提供的类库。
+
+
+
+**静态代理和动态代理主要有以下几点区别：**
+
+- 静态代理只能通过手动完成代理操作，如果被代理类增加了新的方法，则代理类需要同步增加，违背开闭原则。
+- 动态代理采用在运行时动态生成代码的方式，取消了对被代理类的扩展限制，遵循开闭原则。
+- 若动态代理要对目标类的增强逻辑进行扩展，结合策略模式，只需要新增策略类便可完成，无需修改代理类的代码。
+
+
+
+### 动态代理两种方式：
+
+ ![image-20210803232716808](C:\Users\Administrator\Desktop\job\Java_Notes\Java工程.assets\image-动态代理本质)
+
+
+
+**JDK原生动态代理：**
+
+1、被代理类必须实现一个接口
+
+2、InvocationalHandler只是用来做业务增强的，并不能真正的实现业务，也就是内部还是需要调用被代理类的业务方法去实现业务，不能对业务内部进行修改
+
+```
+Proxy：
+Proxy是所有动态代理的父类；它提供了一个静态的方法创建代理的Class对象来配置生成代理类Class文件的方法与参数，主要就是通过Proxy.newProxyInstance(类加载器，类实现的接口，InvocationHandler实现类)，返回Object类型，通过接口类型强转换即可使用代理类；
+
+InvacationHandler：
+每个动态代理实例都有一个关联的InvocationHandler；被代理类的代理方法被调用时，方法将被转发到InvocationalHandler的invoke方法执行。
+
+Proxy就是用来生成代理类的，InvocationalHandler使用来对被代理方法进行扩展的
+```
+
+ ![img](C:\Users\Administrator\Desktop\job\Java_Notes\Java工程.assets\JDK原生动态代理)
+
+
+
+**CGLib动态代理：**
+
+a、CGLB动态代理实现方式降低了被代理对象的要求
+
+b、CGLB动态代理对于被代理对象的final方法无法进行增强
+
+```
+CGLB全称是Code Generation Library，是一个基于ASM的字节码生成库，允许我们在运行时对字节码文件进行修改和动态生成。
+
+Enchancer：来指定要代理的目标对象；实际处理逻辑的对象；最终通过create()方法得到代理对象，对这个对象的非final()方法的调用都会转发给代理对象；
+MethodInterceptor：动态代理的方法调用都会转发到intercept()上进行增强；
+```
+
+
+
+![img](C:\Users\Administrator\Desktop\job\Java_Notes\Java工程.assets\CGLib动态代理)
+
+
+
+**对比：**
+
+ ![img](C:\Users\Administrator\Desktop\job\Java_Notes\Java工程.assets\两种动态代理方式对比)
+
+
+
+
+
 ### 面试题：Spring AOP和AspectJ AOP的区别：
 
 **Spring AOP 属于运行时增强，而 AspectJ 是编译时增强。** Spring AOP 基于代理(Proxying)，而 AspectJ 基于字节码操作(Bytecode Manipulation)。
@@ -2439,7 +2599,7 @@ public OneService getService(status) {
 
 
 
-### 5、Spring中bean的生命周期：
+### 5、bean的生命周期：
 
 **Bean的定义——Bean的初始化——Bean的使用——Bean的销毁**
 
@@ -3594,7 +3754,7 @@ public String checkCart(String isChecked, String skuId, HttpServletRequest reque
 
      映射器的主要作用就是将 SQL 查询到的结果映射为一个POJO，或者将POJO的数据插入到数据库中，并定义一些关于缓存等的重要内容。 
 
-![img](/Users/chen/IdeaProjects/Java_Notes/Java工程.assets/70.png)
+![img](./Java工程.assets/70.png)
 
 
 
@@ -3832,7 +3992,7 @@ value 应该是一个数值吧。然后如果对方传过来的是 001  and name
 如果非要用 ${} 的话，那要注意防止 SQL 注入问题，可以手动判定传入的变量，进行过滤，一般 SQL 注入会输入很长的一条 SQL 语句
 ```
 
-
+## MyBatis怎么将xml文件映射成SQL语句的？
 
 ## 2、XML映射文件中都有哪些标签？
 
@@ -3887,10 +4047,6 @@ xxxxMapper.xml
         id = #{id}
     </delete>
 ```
-
-
-
-
 
 其它：
 
@@ -4297,6 +4453,16 @@ MyBatis 将所有 **Xml 配置信息**都封装到 All-In-One 重量级对象 **
 # --------------------------------------------------------------------------———————————————————————————————
 
 # SpringBoot
+
+## SpringBoot中线程池如何新建线程？
+
+1、使用springboot自带@Async注解创建异步线程
+
+2、直接调用ThreadPoolTaskExecutor
+
+3、使用自定义的线程池
+
+[springboot之线程池ThreadPoolTaskExecutor以及@Async异步注解](https://cloud.tencent.com/developer/article/1639857)
 
 
 

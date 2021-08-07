@@ -88,6 +88,24 @@ protected：保护，更多的是用于框架层啦，就是子类的引用支�
 
 
 
+## Object有哪些方法？
+
+Object是所有类的父类，任何类都默认继承自Object，它的方法有：
+
+（1）getClass，获取运行时的类型，返回一个Class对象
+
+（2）equals方法，**判断对象引用的地址是否相等，所以默认与==一样，一般子类都要重写。**
+
+（3）hashCode方法，返回对象的hash值，一般子类重写了equals就要重写hashcode，保证相同对象有相同hash值。
+
+（4）toString方法，打印对象的信息
+
+（5）clone方法，实现对象的浅拷贝，需实现克隆的接口。
+
+（6）wait() 和 notify()方法，是多线程中的方法，等待唤醒
+
+
+
 ## 1、缓存池
 
 - new Integer(123) 每次都会新建一个对象；
@@ -1203,6 +1221,9 @@ table数组中每个位置被当成一个桶，每个桶存放一个链表。
 HashMap使用拉链法解决冲突，**同一个链表中存放哈希值和散列桶取模运算结果相同的Entry**。
 
 存储结构为数组+链表形式
+
+在JDK 1.8中，数组大小>=64 && 链表长度>8时就会树化为红黑树；红黑树节点数<=6会转为链表
+
 ![在这里插入图片描述](Java笔记.assets/2021030621025985.png)
 
 从上图容易看出，如果选择合适的哈希函数，put()和get()方法可以在常数时间内完成。但在对HashMap进行迭代时，需要遍历整个table以及后面跟的冲突链表。因此对于迭代比较频繁的场景，不宜将HashMap的初始大小设的过大。 
@@ -1504,7 +1525,7 @@ static final int tableSizeFor(int cap) {
 
 当 Hash 冲突严重时，在桶上形成的链表会变的越来越长，这样在查询时的效率就会越来越低；时间复杂度为 O(N)。
 
-因此从JDK1.8开始，一个桶存储的链表长度大于等于8时会将链表转换为红黑树。---O(N)->O(logN)
+因此从JDK1.8开始，一个桶存储的链表长度大于8时会将链表转换为红黑树。---O(N)->O(logN)
 
 	JDK1.8中：
 		1、TREEIFY_THRESHOLD 用于判断是否需要将链表转换为红黑树的阈值。
@@ -1514,25 +1535,36 @@ static final int tableSizeFor(int cap) {
 
 ### 1、put方法
 
+ <img src="C:\Users\Administrator\Desktop\job\Java_Notes\Java笔记.assets\hashmap-put1.png" alt="image-20210807163457621" style="zoom:150%;" />
+
+<img src="C:\Users\Administrator\Desktop\job\Java_Notes\Java笔记.assets\hashmap-put2.png" alt="image-20210807163543976" style="zoom:150%;" />
+
+
+
 ```java
-    final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
+// 1、首先计算出key的hash值，   (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16); 
+final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
-        if ((tab = table) == null || (n = tab.length) == 0)//判断当前桶是否为空，如果桶是空的需要初始化
-            n = (tab = resize()).length;//----在resize方法中会判断是否进行初始化
-        if ((p = tab[i = (n - 1) & hash]) == null)//根据hash值定位到具体桶判断是否为空
-            tab[i] = newNode(hash, key, value, null);//为空说明没有hash冲突，直接在当前位置创建一个新桶
+// 2、判断当前桶是否为空，如果桶是空的执行resize操作 //----在resize方法中会判断是否进行初始化   
+        if ((tab = table) == null || (n = tab.length) == 0)
+            n = (tab = resize()).length;
+// 3、根据hash值计算下标，定位到具体桶，判断对应下标有没有存放数据
+        if ((p = tab[i = (n - 1) & hash]) == null)
+            tab[i] = newNode(hash, key, value, null);
         else {//有hash冲突
             Node<K,V> e; K k;
             //比较当前桶中key、key的hash与写入是否相等，相等赋值给e
             if (p.hash == hash && ((k = p.key) == key || (key != null && key.equals(k))))
                 e = p;
-            else if (p instanceof TreeNode)//如果当前桶是红黑树，写入红黑树
+// 4、判断tab[i]是否为树节点；如果是红黑树，写入红黑树，否则写入链表            
+            else if (p instanceof TreeNode)
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
             else {
                 for (int binCount = 0; ; ++binCount) {//如果是个链表，就封装一个新节点，写入链表
                     if ((e = p.next) == null) {
-                        p.next = newNode(hash, key, value, null);//像是放在后面，1.7是头插法
-                        if (binCount >= TREEIFY_THRESHOLD - 1) // 如果链表大小>=预设值，调用treeifyBin函数
+                        p.next = newNode(hash, key, value, null);//尾插法，1.7是头插法
+// 5、如果链表长度大于8，调用treeifyBin函数，需要把链表转换为红黑树。 treeifyBin(tab, hash);                        
+                        if (binCount >= TREEIFY_THRESHOLD - 1) 
                             treeifyBin(tab, hash);
                         break;
                     }
@@ -1551,6 +1583,7 @@ static final int tableSizeFor(int cap) {
             }
         }
         ++modCount;
+// 6、所有元素处理完成后，判断是否超过阈值； threshold ，超过则扩容。    
         if (++size > threshold)//判断是否进行扩容
             resize();
         afterNodeInsertion(evict);
@@ -1597,6 +1630,8 @@ static final int tableSizeFor(int cap) {
 
 ### 2、get方法
 
+![image-20210807161013406](Java笔记.assets\hashmap-get.png)
+
 ```java
     public V get(Object key) {
     //首先将 key hash 之后取得所定位的桶。如果桶为空则直接返回 null 。
@@ -1626,19 +1661,61 @@ static final int tableSizeFor(int cap) {
     }
 ```
 
+### 3、hash() 函数
+
+hash函数是先拿到 key 的hashcode，是一个32位的int值，然后让hashcode的高16位
+和低16位进行异或操作。  
+
+```java
+	static final int hash(Object key) {
+        int h;
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+    }
+```
+
+1. 一定要尽可能降低 hash 碰撞，越分散越好；
+2. 算法一定要尽可能高效，因为这是高频操作, 因此采用位运算；  
+
+
+
+### 4、resize() 函数
+
+1. 扩容时计算出新的newCap、newThr，这是两个单词的缩写，一个是Capacity ，
+   另一个是阀Threshold
+2. newCap用于创新的数组桶 new Node[newCap];
+3. 随着扩容后，原来那些因为哈希碰撞，存放成链表和红黑树的元素，都需要进行
+   拆分存放到新的位置中。  
+
+```java
+							if ((e.hash & oldCap) == 0) {
+                                if (loTail == null)
+                                    loHead = e;
+                                else
+                                    loTail.next = e;
+                                loTail = e;
+                            }
+                            else {
+                                if (hiTail == null)
+                                    hiHead = e;
+                                else
+                                    hiTail.next = e;
+                                hiTail = e;
+                            }
+```
+
+
+
+​	JDK 1.7里需要重新计算hash获得扩容后的位置
+
+​	JDK 1.8 中不需要重新计算哈希值，也可以判断新的位置
+
+​	判断hash & oldCap的值，等于0则在原位置不变；等于1则变到原位置加数组长度oldCap
 
 
 
 
 
 
-
-**对比Hashtable：**
-
-	1、HashTable使用synchronized进行同步。
-	2、HashMap可以插入键为null的Entry。
-	3、HashMap的迭代器是fail-fast迭代器。
-	4、HashMap不能保证随时间推移Map中的元素次序不会发生变化。
 
 ## 面试题：fail-fast和fail-safe的区别是什么？
 
@@ -2225,6 +2302,17 @@ public final class ConcurrentCache<K, V> {
 **5、底层数据结构：** JDK1.8后的HashMap解决哈希冲突引入了红黑树。
 
 
+
+**对比Hashtable：**
+
+	1、HashTable使用synchronized进行同步。
+	2、HashMap可以插入键为null的Entry。
+	3、HashMap的迭代器是fail-fast迭代器。
+	4、HashMap不能保证随时间推移Map中的元素次序不会发生变化。
+
+
+
+
 ## 面试题：  ConcurrentHashMap 和 Hashtable 的区别？
 
 **1、底层数据结构：** 
@@ -2306,6 +2394,24 @@ Java虚拟机栈是**Java方法执行的内存模型**，栈中存放栈帧，�
 该区域可能抛出以下**异常**：
 	1、当线程请求的栈深度超过最大值，会抛出**StackOverflowError**
 	2、栈进行动态扩展时如果无法申请到足够内存，会抛出**OutOfMemoryError**
+
+
+
+#### OOM & StackOverFlowError:
+
+**StackOverFlowError:**
+当启动一个新的线程是虚拟机会为其分配一个新的栈空间，Java栈以帧为单位保证线程运行状态。当线程调用一个方法时JVM会压入一个新的栈帧到这个线程的栈空间中，只要这个方法还没有返回则这个栈帧就会一直存在。所以方法的嵌套调用太多（如递归调用），随着栈帧的增加导致总和大于JVM设置的-Xss值就会抛出StackOverFlowError异常
+
+**OutOfMemoryError:**
+堆内存溢出：当需要为对象示例化分配内存空间时，而堆的占用已经达到了设置的最大值（-Xmx），就会抛出OutOfMemoryError异常。
+
+方法区内存溢出：方法区存放Java类信息（如类名、访问修饰符、常量池、字段描述、方法描述），在类加载器记载class文件到内存时JVM会提取累的这些信息到方法区，而此时如果需要存储这些类信息且方法区的内存占用已经达到最大值（-XX:MaxPermSize）则会抛出OutOfMemoryError异常。
+
+
+
+[Java中常见OOM的场景及解决方法](https://blog.csdn.net/weixin_42146366/article/details/105126377)
+
+
 
 ### 3、本地方法栈
 
@@ -2734,6 +2840,33 @@ G1收集器具备的特点：
  **G1的缺点:**
 
 region 大小和大对象很难保证一致，这会导致空间的浪费；特别大的对象是可能占用超过一个 region 的。并且，region 太小不合适，会令你在分配大对象时更难找到连续空间，这是一个长久存在的情况。 
+
+
+
+#### CMS收集器和G1收集器的区别
+
+1、**使用范围**不一样
+
+CMS收集器是老年代的收集器，可以配合新生代的Serial和ParNew收集器一起使用
+ G1收集器收集范围是老年代和新生代。不需要结合其他收集器使用
+
+2、 **STW**的时间
+
+CMS收集器以最小的停顿时间为目标的收集器。
+
+G1收集器可预测垃圾回收的停顿时间（建立可预测的停顿时间模型）
+
+3、 **垃圾碎片**
+
+CMS收集器是使用“标记-清除”算法进行的垃圾回收，容易产生内存碎片
+
+G1收集器使用的是“标记-整理”算法，进行了空间整合，降低了内存空间碎片。
+
+4、 垃圾回收的**过程**不一样
+
+ <img src=".\Java笔记.assets\cmsG1对比.png" alt="img" style="zoom:50%;" />
+
+
 
 ## 三、内存分配策略与回收策略
 
@@ -3180,11 +3313,8 @@ public class FileSystemClassLoader extends ClassLoader {
 
 ### 面试题4：使用多线程可能带来的问题：
 
-**内存泄漏、上下文切换、死锁**
-
 ```
 并发出现问题的根源：并发三要素
-
 1、可见性：CPU缓存引起
 	可见性：一个线程对共享变量的修改，另外一个线程能立刻看到。
 	---可能出现一个线程修改过这个变量，但是另一个线程没有立即看到修改后的值。
@@ -3199,7 +3329,15 @@ public class FileSystemClassLoader extends ClassLoader {
 
 
 
-### 面试题5：什么是上下文切换？
+**内存泄漏、上下文切换、死锁**
+
+#### 1、**什么是内存泄露**
+
+内存泄露是指：内存泄漏也称作"存储渗漏"，用动态存储分配函数动态开辟的空间，在使用完毕后未释放，结果导致一直占据该内存单元。
+
+直到程序结束。(其实说白了就是**该内存空间使用完毕之后未回收**)即所谓内存泄漏。
+
+#### 2、什么是上下文切换？
 
 多线程编程中⼀般线程的个数都⼤于 CPU 核心的个数，而⼀个 CPU 核心在任意时刻只能被⼀个线程使⽤，为了让这些线程都能得到有效执行， CPU 采取的策略是**为每个线程分配时间片并轮转**的形式。当⼀个线程的时间片用完的时候就会重新处于就绪状态让给其他线程使用，这个过程就属于⼀次**上下文切换**。
 
@@ -3209,7 +3347,9 @@ public class FileSystemClassLoader extends ClassLoader {
 上下文切换对系统来说意味着消耗大量的CPU 时间，事实上，可能是操作系统中时间消耗最大的操作。
 Linux系统相较于其它系统，上下文切换和模式切换的时间消耗非常少。
 
-### 面试题6：什么是线程死锁？如何避免死锁？
+
+
+#### 3、什么是线程死锁？如何避免死锁？
 
 **线程死锁描述：**
 多个线程同时被阻塞，它们中的一个或者全部都在等待某个资源被释放。由于线程被无限期阻塞，因此程序不可能正常的终止。
@@ -3350,11 +3490,12 @@ public static void main(String[] args) {
 }
 ```
 
-### 4、实现接口VS继承Thread
+### 实现接口VS继承Thread
 
 **实现接口会更好**。因为
 1、Java不支持多重继承，因此继承了Thread类就**无法继承其它类**，但是可以实现多个接口。
 2、类可能只需要要求可执行，继承整个Thread类**开销过大**。
+
 
 
 ### 面试题：实现Runnable接口和Callable接口的区别？
@@ -5026,9 +5167,19 @@ public V put(K key, V value) {
 
 线程对立是指**无论调用端是否采取了同步措施，都无法在多线程环境中并发使用的代码**。由于 Java 语言天生就具备多线程特性，线程对立这种排斥多线程的代码是很少出现的，而且通常都是有害的，应当尽量避免。
 
+
+
+### 如何实现线程安全：
+
+1.原子性：提供互斥访问，同一时刻只能有一个线程对数据进行操作，（atomic,synchronized）；
+
+2.可见性：一个线程对主内存的修改可以及时地被其他线程看到，（synchronized,volatile）；
+
+3.有序性：一个线程观察其他线程中的指令执行顺序，由于指令重排序，该观察结果一般杂乱无序，（happens-before原则）。
+
 ### 2、线程安全的实现方法：
 
-#### 1、互斥同步
+#### 1、互斥同步/阻塞同步
 
 **synchronized和ReentrantLock**
 
@@ -5047,6 +5198,7 @@ public V put(K key, V value) {
 
 硬件支持的原子性操作最典型的是：**比较并交换**（Compare-and-Swap，CAS）。
 **CAS 指令需要有 3 个操作数，分别是内存地址 V、旧的预期值 A 和新值 B。当执行操作时，只有当 V 的值等于 A，才将 V 的值更新为 B。**
+
 
 
 ##### **2、AtomicInteger**
@@ -5160,6 +5312,8 @@ public class ThreadLocalExample {
 ```
 
 ## ThreadLocal
+
+ThreadLocal是实现线程封闭的最好方法
 
 - **ThreadLocal是一个线程内部的数据存储类**，通过它可以在指定的线程中存储数据，数据存储以后，**只有在指定的线程中可以获取到存储的数据，对于其他线程来说则无法取到数据。**
 
@@ -5367,7 +5521,22 @@ ThreadLocal会**为每一个线程提供一个独立的变量副本**，从而�
 
 ## 2、网络体系结构：
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210314095847261.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+```
+为了为了简化网络设计的复杂性，通信协议采用分层的结构，各层协议之间既相互独立又相互高效的协调工作。
+对于复杂的通信协议，其结构应该是采用层次的。分层的协议可以带来很多便利：
+
+1.各层次之间是独立的。某一层并不需要知道它的下一层是如何实现的，而仅仅需要知道该层通过层间的接口所提供的服务。这样，整个问题的复杂程度就下降了。也就是说上一层的工作如何进行并不影响下一层的工作，这样我们在进行每一层的工作设计时只要保证接口不变可以随意调整层内的工作方式。
+
+2.灵活性好。当任何一层发生变化时，只要层间接口关系保持不变，则在这层以上或以下层均不受影响。当某一层出现技术革新或者某一层在工作中出现问题时不会连累到其它层的工作，排除问题时也只需要考虑这一层单独的问题即可。
+
+3.结构上可分割开。各层都可以采用最合适的技术来实现。技术的发展往往不对称的，层次化的划分有效避免了木桶效应，不会因为某一方面技术的不完善而影响整体的工作效率。
+
+4.易于实现和维护。这种结构使得实现和调试一个庞大又复杂的系统变得易于处理，因为整个的系统已经被分解为若干个相对独立的子系统。进行调试和维护时，可以对每一层进行单独的调试，避免了出现找不到、解决错问题的情况。
+
+5.能促进标准化工作。因为每一层的功能及其所提供的服务都已有了精确的说明。标准化的好处就是可以随意替换其中的某一层，对于使用和科研来说十分方便。
+```
+
+![在这里插入图片描述](.\Java笔记.assets\网络分层结构.png)
 **应用层**：为**特定应用程序**提供**数据传输服务**，如HTTP、DNS等协议，数据单位为**报文**。
 **表示层**：**数据压缩、加密以及数据描述**，使应用程序不必关心在各台**主机中数据内部格式**不同的问题。
 **会话层**：**建立及管理会话**。
@@ -5388,7 +5557,7 @@ TCP/IP分层是将数据链路层和物理层合并为网络接口层，共四�
 
 TCP/IP 体系结构不严格遵循 OSI 分层概念，应用层可能会直接使用 IP 层或者网络接口层。
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20210314114514932.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
-** 数据在各层之间传递**
+**数据在各层之间传递**
 向下的过程中，需要添加下层协议所需要的首部或尾部；向上的过程中，不断拆开首部和尾部。
 
 路由器则只有物理层、数据链路层、网络层三层的协议。
@@ -7038,7 +7207,7 @@ println是PrintStream的一个方法。out是一个静态PrintStream类型的成
 
 # Socket
 
-### 网络中进程之间如何通信？
+## 网络中进程之间如何通信？
 
 本地的进程间通信（IPC）可分为四类：
 	1、消息传递（管道、FIFO、消息队列）
@@ -7050,7 +7219,7 @@ println是PrintStream的一个方法。out是一个静态PrintStream类型的成
 在网络中，网络层的“ip地址”可以唯一标识网络中的主机，而传输层的“协议+端口”可以唯一标识主机中的应用程序（进程）。这样利用三元组（ip地址，协议，端口）就可以标识网络的进程。
 
 
-### 什么是Socket？
+## 什么是Socket？
 
 网络中的进程是通过Socket来通信的，源于Unix，socket是“open—write/read—close”模式的一种实现。
 ![在这里插入图片描述](Java笔记.assets/20210406230835123.png)
@@ -7075,7 +7244,7 @@ println是PrintStream的一个方法。out是一个静态PrintStream类型的成
 
 
 
-#### 1、socket() 函数
+### 1、socket() 函数
 
 对应普通文件的打开操作，**socket()用于创建一个socket描述符，唯一标识一个socket**。
 
@@ -7090,7 +7259,7 @@ int socket(int domain, int type, int protocol);
 当调用socket创建一个socket时，返回的socket描述符存在于协议簇空间中，但没有一个具体的地址。
 如果想给它赋值一个地址，就必须调用bind()函数，否则就当调用connect()、listen()时系统自动随机分配一个端口。
 
-#### 2、bind()函数
+### 2、bind()函数
 
 **用于把一个地址簇中的特定地址赋给socket。**
 
@@ -7107,7 +7276,7 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 这就是为什么通常服务器端在listen之前会调用bind()，客户端则不会，而是在connect()时由系统随机生成一个。
 
-#### 3、listen()函数
+### 3、listen()函数
 
 服务器在调用socket()、bind()之后会调用listen()监听这个socket。
 
@@ -7118,7 +7287,7 @@ int listen(int sockfd, int backlog);
 listen函数的第一个参数即为要监听的socket描述字，第二个参数为相应socket可以排队的最大连接个数。
 socket()函数创建的socket默认是一个主动类型的，listen函数将socket变为被动类型的，等待客户的连接请求。
 
-#### 4、connect()函数
+### 4、connect()函数
 
 **客户端通过调用connect函数来建立与TCP服务器的连接。**
 
@@ -7128,7 +7297,7 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 第一个参数即为客户端的socket描述字，第二参数为服务器的socket地址，第三个参数为socket地址的长度。
 
-#### 5、accept()函数
+### 5、accept()函数
 
 TCP服务器端依次调用socket()、bind()、listen()之后，就会监听指定的socket地址了。
 TCP客户端依次调用socket()、connect()之后就向TCP服务器发送了一个连接请求。
@@ -7146,7 +7315,7 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 一个服务器通常只创建一个监听socket描述符，在该服务器的生命周期内一直存在。
 内核为每个由服务器进程接受的客户连接创建了一个已连接socket描述符，当服务器完成了对某个客户的服务，响应地已连接的socke描述符就被关闭。
 
-#### 6、read() 、write()、close()函数
+### 6、read() 、write()、close()函数
 
 网络I/O操作：
 	read()/write()
@@ -7160,7 +7329,7 @@ close一个TCP socket的缺省行为是把该socket标记为已关闭，然后�
 
 注意：close操作只是使相应socket描述符的引用计数-1，只有当引用计数为0的时候，才会触发TCP客户端向服务器发送终止连接请求。
 
-#### 函数的具体调用：
+### 函数的具体调用：
 
 ![在这里插入图片描述](Java笔记.assets/20210407152233265.png)
 当客户端调用connect时，触发了连接请求，向服务器发送了SYN J包，这时connect进入阻塞状态；
@@ -7219,16 +7388,12 @@ Unix有**五种I/O模型：**
 
 ### 1、阻塞式I/O--BIO
 
-![在这里插入图片描述](./Java笔记.assets/BIO.png)
-
 **应用进程被阻塞，直到数据从内核缓冲区复制到应用进程缓冲区中才返回。**——IO执行的两个阶段，进程都处于阻塞阶段。
 **在阻塞的过程中**，**其它应用进程还可以执行**，因此阻塞**不意味着整个操作系统都被阻塞**。
 
 因为其它应用进程还可以执行，所以不消耗 CPU 时间，这种模型的 CPU 利用率会比较高。
 
 ### 2、非阻塞式I/O--NIO
-
-![在这里插入图片描述](./Java笔记.assets/NIO.png)
 
 **NIO中，进行recvfrom的调用时，进程并没有被阻塞；数据没有准备好时，内核告知用户进程数据未就绪，应用进程执行系统调用后，内核返回一个错误码。**
 
@@ -7240,9 +7405,13 @@ Unix有**五种I/O模型：**
 
 ### 3、I/O复用
 
-多路复用IO为何比非阻塞IO模型的效率高是因为: 在**非阻塞IO**中，不断地询问socket状态时通过**用户线程**去进行的; 而在**多路复用IO**中，轮询每个socket状态是**内核**在进行的，这个效率要比用户线程要高的多。
+多路复用IO为何比非阻塞IO模型的效率高是因为: 
 
-——不是应用程序自己监视数据是否就绪，而是由内核监视多个socket文件描述符
+在**非阻塞IO**中，不断地询问socket状态时通过**用户线程**去进行的; 
+
+而在**多路复用IO**中，**轮询每个socket状态是内核在进行的**，这个效率要比用户线程要高的多。
+
+——不是应用程序自己监视数据是否就绪，而是由**内核监视多个socket文件描述符**
 
 
 
@@ -7250,7 +7419,7 @@ Unix有**五种I/O模型：**
 
 
 
-![在这里插入图片描述](./Java笔记.assets/IO多路复用.png)
+<img src="./Java笔记.assets/IO多路复用.png" alt="在这里插入图片描述" style="zoom:67%;" />
 
 
 
@@ -7259,7 +7428,11 @@ Unix有**五种I/O模型：**
 **这一过程会被阻塞，当某一个套接字可读时返回，之后再使用 recvfrom 把数据从内核复制到进程中。**
 它可以**让单个进程具有处理多个 I/O 事件的能力**。又被称为 Event Driven I/O，即**事件驱动 I/O**。
 
-如果一个 Web 服务器没有 I/O 复用，那么每一个 Socket 连接都需要创建一个线程去处理。如果同时有几万个连接，那么就需要创建相同数量的线程。**相比于多进程和多线程技术，I/O 复用不需要进程线程创建和切换的开销，系统开销更小。**
+*事件发生时主线程把事件放入事件队列，在另外线程不断循环消费事件列表中的事件，调用事件对应的处理逻辑处理事件。事件驱动方式也被称为消息通知方式，其实是设计模式中观察者模式的思路。*
+
+如果一个 Web 服务器没有 I/O 复用，那么每一个 Socket 连接都需要创建一个线程去处理。如果同时有几万个连接，那么就需要创建相同数量的线程。
+
+**相比于多进程和多线程技术，I/O 复用不需要进程线程创建和切换的开销，系统开销更小。**
 
 
 
@@ -7269,7 +7442,7 @@ Unix有**五种I/O模型：**
 
 **内核**在**数据到达时**向应用进程**发送 SIGIO 信号**，应用进程收到之后在信号处理程序中**调用 recvfrom** 将数据从内核**复制到应用进程中**。——阻塞第二阶段
 
-![在这里插入图片描述](./Java笔记.assets/SIGIO.png)
+<img src="./Java笔记.assets/SIGIO.png" alt="在这里插入图片描述"  />
 
 相比于非阻塞式 I/O 的轮询方式，信号驱动 I/O 的 CPU 利用率更高。
 
@@ -7298,6 +7471,12 @@ Unix有**五种I/O模型：**
 
 
 ## 二、NIO-非阻塞式IO
+
+*NIO并不是Java独有的概念，NIO代表的一个词汇叫着IO多路复用。它是由操作系统提供的系统调用，早期这个操作系统调用的名字是select，但是性能低下，后来渐渐演化成了Linux下的epoll和Mac里的kqueue。我们一般就说是epoll，因为没有人拿苹果电脑作为服务器使用对外提供服务。而Netty就是基于Java NIO技术封装的一套框架。为什么要封装，因为原生的Java NIO使用起来没那么方便，而且还有臭名昭著的bug，Netty把它封装之后，提供了一个易于操作的使用模式和接口，用户使用起来也就便捷多了。*
+
+
+
+
 
 **Non-blocking IO** [NIO教程](https://wiki.jikexueyuan.com/project/java-nio-zh/java-nio-tutorial.html)
 
@@ -7732,6 +7911,10 @@ NIO中的**文件通道（FileChannel**）在读写数据的时候主要使用�
 
 ## 三、I/O复用
 
+
+
+
+
 select/poll/epoll 都是 I/O 多路复用的**具体实现**，select 出现的最早，之后是 poll，再是 epoll。
 
 
@@ -7929,6 +8112,199 @@ select **可移植性更好**，几乎被所有主流平台所支持。
 需要同时监控小于 1000 个描述符，就没有必要使用 epoll，因为这个应用场景下并不能体现 epoll 的优势。
 
 需要监控的描述符状态变化多，而且都是非常短暂的，也没有必要使用 epoll。因为 epoll 中的所有描述符都存储在内核中，造成每次需要对描述符的状态改变都需要通过 epoll_ctl() 进行系统调用，频繁系统调用降低效率。并且 epoll 的描述符存储在内核，不容易调试。
+
+# --------------------------------------------------------------------------———————————————————————————————  
+
+# Netty
+
+[Netty入门教程——认识Netty](https://www.jianshu.com/p/b9f3f6a16911)
+
+[Netty 底层架构原理](https://mp.weixin.qq.com/s?__biz=MzU0OTk3ODQ3Ng==&mid=2247486735&idx=1&sn=0d3548e805f267e52676427a5e435d86&chksm=fba6e50cccd16c1abc7da64fb520dfd129625a6cf62f170b84e468aad1f7a8ee6e23bf5b29dc&mpshare=1&scene=1&srcid=&sharer_sharetime=1576064604745&sharer_sh)
+
+[Netty底层机制](https://rnang0.github.io/2020/09/27/春招复习11：Netty底层机制和源码剖析/)
+
+Netty 是一个异步的、基于事件驱动的网络应用框架，用于异步通信。Dubbo 框架中通信组件，还有 RocketMQ 中生产者和消费者的通信，都使用了 Netty。
+
+Netty 是一个利用 Java 的高级网络的能力，隐藏其背后的复杂性而提供一个易于使用的 API 的客户端/服务器框架。
+
+ **Netty主要针对在TCP协议下，面向Clients端的高并发应用，本质是一个NIO框架，适用于服务器通讯相关的多种应用场景。**
+
+### Netty和Tomcat有什么区别？
+
+```
+以前编写网络调用程序的时候，我们都会在客户端创建一个 Socket，通过这个 Socket 连接到服务端。
+
+服务端根据这个 Socket 创建一个 Thread，用来发出请求。客户端在发起调用以后，需要等待服务端处理完成，才能继续后面的操作。这样线程会出现等待的状态。
+
+如果客户端请求数越多，服务端创建的处理线程也会越多，JVM 如此多的线程并不是一件容易的事。
+```
+
+
+
+Netty和Tomcat最大的区别就在于通信协议，Tomcat是基于Http协议的，他的实质是一个基于http协议的web容器，但是Netty不一样，他能通过编程自定义各种协议，因为**netty能够通过codec自己来编码/解码字节流，完成类似redis访问的功能，这就是netty和tomcat最大的不同。**
+
+*有人说 netty 的性能就一定比tomcat性能高，其实不然，tomcat从6.x开始就支持了nio模式，并且后续还有APR模式——一种通过jni调用apache网络库的模式，相比于旧的bio模式，并发性能得到了很大提高，特别是APR模式，而netty是否比tomcat性能更高，则要取决于 netty 程序作者的技术实力了。*
+
+
+
+### Netty为什么并发高？
+
+Netty是一款**基于NIO（Nonblocking I/O，非阻塞IO）开发的网络通信框架**，对比于BIO（Blocking I/O，阻塞IO），他的并发性能得到了很大提高，两张图让你了解BIO和NIO的区别：
+
+
+
+![image-20210806174836597](Java笔记.assets\BIO-NIO对比.png)
+
+
+
+
+ 从这两图可以看出，**NIO的单线程能处理连接的数量比BIO要高出很多**，而为什么单线程能处理更多的连接呢？原因就是图二中出现的**`Selector`**。
+
+ 当一个连接建立之后，他有两个步骤要做：
+
+- 第一步是接收完客户端发过来的全部数据，
+
+- 第二步是服务端处理完请求业务之后返回response给客户端。 
+
+NIO和BIO的区别主要是在第一步。
+
+- 在BIO中，等待客户端发数据这个过程是阻塞的，这样就造成了一个线程只能处理一个请求的情况，而机器能支持的最大线程数是有限的，这就是为什么BIO不能支持高并发的原因。
+
+- 而NIO中，当一个Socket建立好之后，Thread并不会阻塞去接受这个Socket，而是将这个请求交给Selector，Selector会不断的去遍历所有的Socket，一旦有一个Socket建立完成，他会通知Thread，然后Thread处理完数据再返回给客户端——**这个过程是不阻塞的**，这样就能让一个Thread处理更多的请求了。
+
+
+
+下面两张图是基于BIO的处理流程和netty的处理流程，辅助你理解两种方式的差别：
+
+![image-20210806175345425](Java笔记.assets\处理流程-BIO及NIO.png)
+
+
+
+除了BIO和NIO之外，还有一些其他的IO模型，下面这张图就表示了五种IO模型的处理流程：
+
+<img src="Java笔记.assets\五种IO对比.png" alt="img"  />
+
+五种常见的IO模型
+
+- BIO，同步阻塞IO，阻塞整个步骤，如果连接少，他的延迟是最低的，因为一个线程只处理一个连接，适用于少连接且延迟低的场景，比如说数据库连接。
+- NIO，同步非阻塞IO，阻塞业务处理但不阻塞数据接收，适用于高并发且处理简单的场景，比如聊天软件。
+- 多路复用IO，他的两个步骤处理是分开的，也就是说，一个连接可能他的数据接收是线程a完成的，数据处理是线程b完成的，他比BIO能处理更多请求。
+- 信号驱动IO，这种IO模型主要用在嵌入式开发，不参与讨论。
+- 异步IO，他的数据请求和数据处理都是异步的，数据请求一次返回一次，适用于长连接的业务场景。
+
+
+
+### Netty为什么传输快？
+
+Netty的传输快其实也是依赖了NIO的一个特性——***零拷贝***。
+
+我们知道，Java的内存有堆内存、栈内存和字符串常量池等等，其中堆内存是占用内存空间最大的一块，也是Java对象存放的地方，一般我们的数据如果需要从IO读取到堆内存，中间需要经过Socket缓冲区，也就是说一个数据会被拷贝两次才能到达他的的终点，如果数据量大，就会造成不必要的资源浪费。
+
+Netty针对这种情况，使用了NIO中的另一大特性——零拷贝，**当他需要接收数据的时候，他会在堆内存之外开辟一块内存，数据就直接从IO读到了那块内存中去，在netty里面通过ByteBuf可以直接对这些数据进行直接操作，从而加快了传输速度。**
+ 
+
+![image-20210806180012118](Java笔记.assets\传统数据拷贝和零拷贝.png)
+
+
+
+### 为什么说Netty封装好？
+
+- **Channel**
+   数据传输流，与channel相关的概念有以下四个，上一张图让你了解netty里面的Channel。
+
+  ![img](Java笔记.assets\channal.png)
+
+  **Channel一览**
+
+  - Channel，表示一个连接，可以理解为每一个请求，就是一个Channel。
+
+  - **ChannelHandler**，核心处理业务就在这里，用于处理业务请求。
+
+  - ChannelHandlerContext，用于传输业务数据。
+
+  - ChannelPipeline，用于保存处理过程需要用到的ChannelHandler和ChannelHandlerContext。
+
+    
+
+- **ByteBuf**
+   ByteBuf是一个存储字节的容器，最大特点就是**使用方便**，它既有自己的读索引和写索引，方便你对整段字节缓存进行读写，也支持get/set，方便你对其中每一个字节进行读写，他的数据结构如下图所示：
+
+   ![img](Java笔记.assets\bytebuf.png)
+
+  他有三种使用模式：
+
+  1. Heap Buffer 堆缓冲区
+      堆缓冲区是ByteBuf最常用的模式，他将数据存储在堆空间。
+
+  2. Direct Buffer 直接缓冲区
+
+     直接缓冲区是ByteBuf的另外一种常用模式，他的内存分配都不发生在堆，jdk1.4引入的nio的ByteBuffer类允许jvm通过本地方法调用分配内存，这样做有两个好处
+
+     - 通过免去中间交换的内存拷贝, 提升IO处理速度; 直接缓冲区的内容可以驻留在垃圾回收扫描的堆区以外。
+     - DirectBuffer 在 -XX:MaxDirectMemorySize=xxM大小限制下, 使用 Heap 之外的内存, GC对此”无能为力”,也就意味着规避了在高负载下频繁的GC过程对应用线程的中断影响.
+
+  3. Composite Buffer 复合缓冲区
+      复合缓冲区相当于多个不同ByteBuf的视图，这是netty提供的，jdk不提供这样的功能。
+
+  除此之外，他还提供一大堆api方便你使用，在这里我就不一一列出了，具体参见[ByteBuf字节缓存](https://links.jianshu.com/go?to=https%3A%2F%2Fwaylau.gitbooks.io%2Fessential-netty-in-action%2Fcontent%2FCORE%20FUNCTIONS%2FBuffers.html)。
+
+
+
+- **Codec**
+  Netty中的编码/解码器，通过他你能完成字节与pojo、pojo与pojo的相互转换，从而达到自定义协议的目的。
+  在Netty里面最有名的就是HttpRequestDecoder和HttpResponseEncoder了。
+
+
+
+### Bootstrap
+
+Bootstrap 的作用就是将 Netty 核心组件配置到程序中，并且让他们运行起来。
+
+
+
+从 Bootstrap 的继承结构来看，分为两类分别是 Bootstrap 和 ServerBootstrap，一个对应客户端的引导，另一个对应服务端的引导。
+
+![图片](Java笔记.assets\bootstrap.png)
+
+*支持客户端和服务端的程序引导*
+
+
+
+客户端引导 Bootstrap，主要有两个方法 bind（） 和 connect（）。Bootstrap 通过 bind（） 方法创建一个 Channel。
+
+
+
+在 bind（） 之后，通过调用 connect（） 方法来创建 Channel 连接。
+
+![图片](Java笔记.assets\bootstrap创建连接.png)
+
+*Bootstrap 通过 bind 和 connect 方法创建连接*
+
+
+
+服务端引导 ServerBootstrap，与客户端不同的是在 Bind（） 方法之后会创建一个 ServerChannel，它不仅会创建新的 Channel 还会管理已经存在的 Channel。
+
+![图片](Java笔记.assets\bind管理创建连接.png)
+
+ServerBootstrap 通过 bind 方法创建/管理连接
+
+
+
+通过上面的描述，服务端和客户端的引导存在两个区别：
+
+- ServerBootstrap（服务端引导）绑定一个端口，用来监听客户端的连接请求。而 Bootstrap（客户端引导）只要知道服务端 IP 和 Port 建立连接就可以了。
+
+- Bootstrap（客户端引导）需要一个 EventLoopGroup，但是 ServerBootstrap（服务端引导）则需要两个 EventLoopGroup。
+
+  因为服务器需要两组不同的 Channel。第一组 ServerChannel 自身监听本地端口的套接字。第二组用来监听客户端请求的套接字。
+
+
+
+
+
+![图片](C:\Users\Administrator\Desktop\job\Java_Notes\Java笔记.assets\ServerBootStrap.png)
+
+*ServerBootstrap 有两组 EventLoopGroup*
 
 
 
@@ -8481,6 +8857,41 @@ data/mysql文件夹下 ：文件夹对应数据库， .frm文件都是一些表
 		右键就可以进行转储SQL文件
 		也可以直接导入SQL备份文件
 
+### 面试题：执行SQL查询语句时,底层原理?
+
+![MySQL的逻辑架构图](Java笔记.assets\MySQL逻辑架构图.png)
+
+- 第一步，先连接到这个数据库上---**连接器**。连接器负责跟客户端建立连接、获取权限、维持和管理连接。
+
+- ~~第二步：查询缓存。MySQL 拿到一个查询请求后，会先到查询缓存看看，之前是不是执行过这条语句。之前执行过的语句及其结果可能会以 key-value 对的形式，被直接缓存在内存中。key 是查询的语句，value 是查询的结果。如果你的查询能够直接在这个缓存中找到 key，那么这个 value 就会被直接返回给客户端。~~
+
+   需要注意的是，MySQL 8.0 版本直接将查询缓存的整块功能删掉了，也就是说 8.0 开始彻底没有这个功能了。
+
+- **分析器**：对 SQL 语句做解析。
+   分析器先会做“**词法分析**”。你输入的是由多个字符串和空格组成的一条 SQL 语句，MySQL需要识别出里面的字符串分别是什么，代表什么。
+   MySQL 从你输入的"select"这个关键字识别出来，这是一个查询语句。它也要把字符串“T”识别成“表名 T”，把字符串“ID”识别成“列 ID”。
+   做完了这些识别以后，就要做“**语法分析**”。根据词法分析的结果，语法分析器会根据语法规则，判断你输入的这个 SQL 语句是否满足 MySQL 语法。
+
+- **优化器**
+  经过了分析器，MySQL 就知道你要做什么了。在开始执行之前，还要先经过优化器的处理。
+
+  优化器是在表里面有多个索引的时候，决定使用哪个索引；或者在一个语句有多表关联（join）的时候，决定各个表的连接顺序。
+
+- **执行器**
+  MySQL 通过分析器知道了你要做什么，通过优化器知道了该怎么做，于是就进入了执行器阶段，开始执行语句。
+
+  开始执行的时候，要先判断一下你对这个表 T 有没有执行查询的权限
+
+  如果有权限，就打开表继续执行。打开表的时候，优化器就会根据表的引擎定义，去使用这个引擎提供的接口。
+
+  对于有索引的表，执行的逻辑也差不多。第一次调用的是“取满足条件的第一行”这个接口，之后循环取“满足条的下一行”这个接口
+
+  
+
+  *你会在数据库的慢查询日志中看到一个 rows_examined 的字段，表示这个语句执行过程中扫描了多少行。这个值就是在执行器每次调用引擎获取数据行的时候累加的。*
+
+
+
 ## 二、约束及事务
 
 ### 1、约束
@@ -8606,6 +9017,7 @@ data/mysql文件夹下 ：文件夹对应数据库， .frm文件都是一些表
 
 
 
+[mysql事务和锁](https://juejin.cn/post/6855129007336521741)
 
 ### 3、事务
 
@@ -8665,7 +9077,7 @@ ACID特性不是一种平级关系：
 **2、并发存在的问题：**
 		1、**脏读**：一个事务，读取到另一个事务中没有提交的数据。----**（读取未提交数据）**
 		2、**不可重复读（虚读）**：在同一个事务中，两次读取到的数据不一样。----别的事务作了修改**（前后多次读取，数据内容不一致）**
-		3、**幻读**：一个事务操作（DML）数据表中所有的记录，另一个事务添加了一条数据，则第一个事务查询不到自己的修改。**（前后多次读取，数据总量不一致）** --- 在MySQL数据库中见不到
+		3、**幻读**：T1 读取某个范围的数据，T2 在这个范围内插入新的数据，T1 再次读取这个范围的数据，此时读取的结果和和第一次读取的结果不同。**（前后多次读取，数据总量不一致）** ~~--- 在MySQL数据库中见不到~~
 		4、**丢失修改**：一个事务的更新操作被另外一个事务的更新操作替换。
 
 
@@ -8698,13 +9110,15 @@ ACID特性不是一种平级关系：
 			---需要加锁实现，使用加锁机制保证同一时间只有一个事务执行，保证事务串行执行。
 				可以解决所有问题
 
+ <img src=".\Java笔记.assets\隔离级别.png" alt="image-20210805213704721" style="zoom:80%;" />
+
 		注意： 隔离级别从小到大，从1到4，安全性越来越高，但是效率越来越低。
 		数据库查询隔离级别：* select @@tx_isolation;
 		数据库设置隔离级别：* set global transaction isolation level  级别字符串;
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210317145756847.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ <img src="Java笔记.assets\隔离级别解决的问题.png" alt="在这里插入图片描述" style="zoom: 67%;" />
 
-
+ 
 
  几篇参考博客：
 
@@ -8716,12 +9130,14 @@ ACID特性不是一种平级关系：
 
 #### 4、多版本并发控制MVCC
 
-多版本并发控制（Multi-Version Concurrency Control, **MVCC**）是 MySQL 的 **InnoDB 存储引擎**实现隔离级别的一种方式，用于实现**读已提交 RC**和**可重复读  RR**两种隔离级别。
+![image-20210524161928747](./Java笔记.assets/image-20210524161928747.png)
+
+多版本并发控制（Multi-Version Concurrency Control, **MVCC**）是 MySQL 的 **InnoDB 存储引擎**实现隔离级别的一种方式，
+
+用于实现**读已提交 RC**和**可重复读  RR**两种隔离级别。
 
 **读未提交**隔离级别总是读取最新的数据行，要求很低，**无需使用MVCC**。
 **串行化**隔离级别需要对所有读取的行都加锁，**单纯使用MVCC无法实现**。
-
-![image-20210524161928747](./Java笔记.assets/image-20210524161928747.png)
 
 
 
@@ -8737,25 +9153,23 @@ MVCC利用多版本的思想，<font color=red>**写操作更新最新的版本�
 
 脏读和不可重复读最根本的原因是事务读取到其它事务未提交的修改。
 在**事务进行读取操作时**，为了解决脏读和不可重复读问题，MVCC 规定**只能读取已经提交的快照**。
-当然一个事务**可以读取自身未提交的快照**，这不算是脏读。
+(当然一个事务**可以读取自身未提交的快照**，这不算是脏读。)
 
 
 
 **2、实现原理**
 
-**说法一**：版本号
+~~**说法一**：版本号~~
 
-系统版本号 **SYS_ID**：是一个递增的数字，每开始一个新的事务，系统版本号就会自动递增。
-事务版本号 **TRX_ID** ：事务开始时的系统版本号。
+~~系统版本号 **SYS_ID**：是一个递增的数字，每开始一个新的事务，系统版本号就会自动递增。~~
+~~事务版本号 **TRX_ID** ：事务开始时的系统版本号。~~
 
+~~**说法二**：MVCC 在每行记录后面都保存着两个隐藏的列，用来存储两个版本号：~~
 
+- ~~创建版本号：指示创建一个数据行的快照时的系统版本号；~~
+- ~~删除版本号：如果该快照的删除版本号大于当前事务版本号表示该快照有效，否则表示该快照已经被删除了。~~
 
-**说法二**：MVCC 在每行记录后面都保存着两个隐藏的列，用来存储两个版本号：
-
-- 创建版本号：指示创建一个数据行的快照时的系统版本号；
-- 删除版本号：如果该快照的删除版本号大于当前事务版本号表示该快照有效，否则表示该快照已经被删除了。
-
-<img src="./Java笔记.assets/image-20210524152139153.png" alt="image-20210524152139153" style="zoom:50%;" />
+ 
 
 **隐藏列：**
 
@@ -8763,11 +9177,11 @@ MVCC利用多版本的思想，<font color=red>**写操作更新最新的版本�
 InnoDB会在每行数据后增加隐藏字段：
 
 1. DB_ROW_ID（行ID）：隐藏的自增 ID，如果表没有主键，InnoDB 会自动按 ROW ID 产生一个聚集索引树；如果有主键就没有这一列。
-2. DB_TRX_ID（事务ID）：记录插入或者更新该行数据的事务ID--创建版本号--记录最后一次修改该记录的事务 ID。
-3. DB_ROLL_PTR（回滚指针）：指向undo log记录，即指向这条记录的上一个版本；通过回滚指针连接同一条数据的多个版本，形成一个版本链。
+2. DB_TRX_ID（事务ID）/创建版本号：记录插入或者更新该行数据的事务ID--创建版本号--记录最后一次修改该记录的事务 ID。
+3. DB_ROLL_PTR（回滚指针）/删除版本号：指向undo log记录，即指向这条记录的上一个版本；通过回滚指针连接同一条数据的多个版本，形成一个版本链。
 ```
 
-![image-20210524153025480](./Java笔记.assets/image-20210524153025480.png)
+ <img src="./Java笔记.assets/image-20210524153025480.png" alt="image-20210524153025480" style="zoom: 33%;" />
 
 InnoDB **每一行数据都有一个隐藏的回滚指针**，用于**指向该行修改前的最后一个历史版本**，这个历史版本**存放在 undo log** 中。如果要执行**更新操作**，会**将原记录放入 undo log 中**，并**通过隐藏的回滚指针指向 undo log 中的原记录**。其它事务此时需要查询时，就是查询 undo log 中这行数据的最后一个历史版本。
 
@@ -8783,7 +9197,7 @@ MVCC 的多版本指的是**多个版本的快照**。---事务的可见性都�
 ```
 更新操作：
 
-当事务对数据行进行一次更新操作时，会把旧数据行记录在一个叫做undo log的记录中，在undo log中除了记录数据行，还会记录下该行数据的对应的创建版本号，也就是生成这行数据的事务id嘛~然后将原来数据行中的回滚指针指向undo log记录的这行数据。然后再在原来数据表中进行一次更新操作，如果这次更新操作回滚了，那么就可以根据回滚指针去undo log中查找之前的数据进行复原。如果后续还有更新操作的话，就会在undo log中和之前的数据行形成一条链表，链表头就是最新的数据，这条链表就叫做版本链。
+当事务对数据行进行一次更新操作时，会把旧数据行记录在一个叫做undo log的记录中，在undo log中除了记录数据行，还会记录下该行数据的对应的创建版本号，也就是生成这行数据的事务id; 然后将原来数据行中的回滚指针指向undo log记录的这行数据。然后再在原来数据表中进行一次更新操作，如果这次更新操作回滚了，那么就可以根据回滚指针去undo log中查找之前的数据进行复原。如果后续还有更新操作的话，就会在undo log中和之前的数据行形成一条链表，链表头就是最新的数据，这条链表就叫做版本链。
 ```
 
 例子：
@@ -8797,17 +9211,18 @@ UPDATE t SET x="c" WHERE id=1;
 ```
 
 没有使用 START TRANSACTION 将上面的操作当成一个事务来执行，根据 MySQL 的 AUTOCOMMIT 机制，每个操作都会被当成一个事务来执行，所以上面的操作总共涉及到三个事务。
-快照中除了记录事务版本号 TRX_ID 和操作之外，还记录了一个 bit 的 DEL 字段，用于标记是否被删除。
+快照中除了记录事务版本号 TRX_ID 和操作之外，还记录了**一个 bit 的 DEL 字段，用于标记是否被删除**。
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20210317201029305.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
 INSERT、UPDATE、DELETE 操作会创建一个日志，并将事务版本号 TRX_ID 写入。
 DELETE 可以看成是一个特殊的 UPDATE，还会额外将 DEL 字段设置为 1。
 
 ------
 
-<font color=red>实现过程 </font>
+**<font color=red>实现过程 </font>**
 
 **以下实现过程针对可重复读隔离级别。**
 
+```
 当开始一个事务时，该事务的版本号肯定大于当前所有数据行快照的创建版本号，理解这一点很关键。数据行快照的创建版本号是创建数据行快照时的系统版本号，系统版本号随着创建事务而递增，因此新创建一个事务时，这个事务的系统版本号比之前的系统版本号都大，也就是比所有数据行快照的创建版本号都大。
 
 ==1.SELECT==
@@ -8826,7 +9241,10 @@ DELETE 可以看成是一个特殊的 UPDATE，还会额外将 DEL 字段设置�
 
 ==4.UPDATE== 
 
-将当前系统版本号作为更新前的数据行快照的删除版本号，并将当前系统版本号作为更新后的数据行快照的创建版本号。可以理解为先执行 DELETE 后执行 INSERT。
+将当前系统版本号作为更新前的数据行快照的删除版本号，并将当前系统版本号作为更新后的数据行快照的创建版本号。可以理解为先执行 DELETE 后执行INSERT。
+```
+
+ <img src="./Java笔记.assets/image-20210524152139153.png" alt="image-20210524152139153" style="zoom: 67%;" />
 
 ------
 
@@ -8893,23 +9311,34 @@ ReadView中包含4个比较重要的内容：
 **幻读现象的原因：**
 
 ```
-快照读
+幻读:
+---T1 读取某个范围的数据，T2 在这个范围内插入新的数据，T1 再次读取这个范围的数据，此时读取的结果和和第一次读取的结果不同。
+---（前后多次读取，数据总量不一致）
+```
+
+```
+快照读:
 当执行select操作是innodb默认会执行快照读，会记录下这次select后的结果，之后select 的时候就会返回这次快照的数据，即使其他事务提交了不会影响当前select的数据，这就实现了可重复读了。快照的生成当在第一次执行select的时候，也就是说假设当A开启了事务，然后没有执行任何操作，这时候B insert了一条数据然后commit,这时候A执行 select，那么返回的数据中就会有B添加的那条数据。之后无论再有其他事务commit都没有关系，因为快照已经生成了，后面的select都是根据快照来的。
 
 当前读
 对于会对数据修改的操作(update、insert、delete)都是采用当前读的模式。在执行这几个操作时会读取最新的版本号记录，写操作后把版本号改为了当前事务的版本号，所以即使是别的事务提交的数据也可以查询到。假设要update一条记录，但是在另一个事务中已经delete掉这条数据并且commit了，如果update就会产生冲突，所以在update的时候需要知道最新的数据。也正是因为这样所以才导致幻读。
+```
 
-在快照读情况下，MySQL通过mvcc来避免幻读。
-在当前读情况下，MySQL通过next-key来避免幻读
-如何解决当前读导致的幻读问题
-使用可串行化的隔离级别
+在**快照读**情况下，MySQL 通过 **mvcc** 来避免幻读。
+在**当前读**情况下，MySQL 通过 **next-key** 来避免幻读
+
+------
+
+**如何解决当前读导致的幻读问题?**
+
+```sql
+1、使用可串行化的隔离级别
 SERIALIZABLE会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁竞争的问题。实际应用中也很少用到这个隔离级别，只有在非常需要确保数据的一致性而且可以接受没有并发的情况下，才考虑采用该级别
 
-使用next-key锁，即更新时基于非唯一索引更新数据
+2、使用next-key锁，即更新时基于非唯一索引更新数据
 InnoDB中next-key基于行锁和间隙锁实现，而间隙锁依赖于非唯一索引，InnoDB中索引是有序的，间隙锁时基于索引锁住其他事务需要插入的索引行，当使用非唯一索引进行更新时InnoDB会加上间隙锁，阻塞其他事务需要查询的索引行，避免幻读
 
-新增非唯一索引
-
+3、新增非唯一索引
 ALTER TABLE tb_user ADD INDEX idx_batch(batch);
 ```
 
@@ -8951,7 +9380,9 @@ ALTER TABLE tb_user ADD INDEX idx_batch(batch);
 
 **对于快照读来说，幻读的解决是依赖mvcc解决。--RR级别下，通过MVCC控制同一个ReadView，不用加锁**
 
-对于当前读，在RR级别下，通过next-key锁（记录锁+gap锁）解决。**而对于当前读则依赖于gap-lock解决。**
+对于当前读，在RR级别下，通过next-key锁（记录锁+gap锁）解决。
+
+**而对于当前读则依赖于gap-lock解决。**
 
 ------
 
@@ -9119,13 +9550,225 @@ mysql的行锁默认就是使用的临键锁，临键锁是由记录锁和间隙
 
 ------
 
-### binlog、undolog、redolog：
+### 面试题：执行update语句时,其底层经历了哪些操作?
+
+```sql
+update T set c=c+1 where ID=2;
+```
+
+ ![img](Java笔记.assets\更新操作update.png)
+
+- 执行器先找引擎取 ID=2 这一行。ID 是主键，引擎直接用树搜索找到这一行。如果 ID=2这一行所在的数据页本来就在内存中，就直接返回给执行器；否则，需要先从磁盘读入内存，然后再返回。
+- 执行器拿到引擎给的行数据，把这个值加上 1，比如原来是 N，现在就是 N+1，得到新的一行数据，再调用引擎接口写入这行新数据。
+- 引擎将这行新数据更新到内存中，同时将这个更新操作记录到 redo log 里面，此时 redolog 处于 prepare 状态。然后告知执行器执行完成了，随时可以提交事务。
+- 执行器生成这个操作的 binlog，并把 binlog 写入磁盘。
+- 执行器调用引擎的提交事务接口，引擎把刚刚写入的 redo log 改成提交（commit）状态，更新完成。这里我给出这个 update 语句的执行流程图，图中浅色框表示是在 InnoDB 内部执行的，深色框表示是在执行器中执行的。
+
+
+
+### 两阶段提交：
+
+可以看到InnoDB将 redo log 的写入拆成了两个步骤：prepare 和 commit，这就是"两阶段提交"。
+
+两阶段提交是跨系统维持数据逻辑一致性时常用的一个方案。
+
+ ![img](Java笔记.assets\两阶段提交.png)
+
+先把这次更新写入到redolog中，并设redolog为prepare状态，然后再写入binlog,写完binlog之后再提交事务，并设redolog为commit状态。
+
+
+
+
+
+```
+怎样让数据库恢复到半个月内任意一秒的状态？
+
+前面我们说过了，binlog 会记录所有的逻辑操作，并且是采用“追加写”的形式。如果你的DBA 承诺说半个月内可以恢复，那么备份系统中一定会保存最近半个月的所有 binlog，同时系统会定期做整库备份。这里的“定期”取决于系统的重要性，可以是一天一备，也可以是一周一备。
+
+当需要恢复到指定的某一秒时，比如某天下午两点发现中午十二点有一次误删表，需要找回数据，那你可以这么做：
+首先，找到最近的一次全量备份，如果你运气好，可能就是昨天晚上的一个备份，从这个备份恢复到临时库；然后，从备份的时间点开始，将备份的 binlog 依次取出来，重放到中午误删表之前的那个时刻。
+
+这样你的临时库就跟误删之前的线上库一样了，然后你可以把表数据从临时库取出来，按需要恢复到线上库去。
+```
+
+**为什么需要两阶段提交？**
+
+redolog是后来才加上的，binlog是之前就有的。一开始存储引擎只有MyISAM,后来才有的InnoDB,然后MyISAM没有事务，没有crash-safe的能力。所以InnoDB搞了个redolog。然后**为了保证两份日志同步，所以才有了两段式提交**。
+
+由于 redo log 和 binlog 是两个独立的逻辑，如果不用两阶段提交，要么就是先写完 redo log再写 binlog，或者采用反过来的顺序。我们看看这两种方式会有什么问题。
+
+仍然用前面的 update 语句来做例子。假设当前 ID=2 的行，字段 c 的值是 0，再假设执行update 语句过程中在写完第一个日志后，第二个日志还没有写完期间发生了 crash，会出现什么情况呢？
+
+1. 先写 redo log 后写 binlog。假设在 redo log 写完，binlog 还没有写完的时候，MySQL进程异常重启。由于我们前面说过的，redo log 写完之后，系统即使崩溃，仍然能够把数据恢复回来，所以恢复后这一行 c 的值是 1。但是由于 binlog 没写完就 crash 了，这时候 binlog 里面就没有记录这个语句。因此，之后备份日志的时候，存起来的 binlog 里面就没有这条语句。然后你会发现，如果需要用这个 binlog 来恢复临时库的话，由于这个语句的 binlog 丢失，这个临时库就会少了这一次更新，恢复出来的这一行 c 的值就是 0，与原库的值不同。
+2. 先写 binlog 后写 redo log。如果在 binlog 写完之后 crash，由于 redo log 还没写，崩溃恢复以后这个事务无效，所以这一行 c 的值是 0。但是 binlog 里面已经记录了“把 c 从 0 改成 1”这个日志。所以，在之后用 binlog来恢复的时候就多了一个事务出来，恢复出来的这一行 c 的值就是 1，与原库的值不同。
+3. 可以看到，如果不使用“两阶段提交”，那么数据库的状态就有可能和用它的日志恢复出来的库的状态不一致。
+   你可能会说，这个概率是不是很低，平时也没有什么动不动就需要恢复临时库的场景呀？其实不是的，不只是误操作后需要用这个过程来恢复数据。当你需要扩容的时候，也就是需要再多搭建一些备库来增加系统的读能力的时候，现在常见的做法也是用全量备份加上应用 binlog来实现的，这个“不一致”就会导致你的线上出现主从数据库不一致的情况。简单说，redo log 和 binlog 都可以用于表示事务的提交状态，而两阶段提交就是让这两个状态保持逻辑上的一致。
+
+
+
+**如何判断binlog和redolog是否达成了一致？**
+
+```
+当MySQL写完redolog并将它标记为prepare状态时，并且会在redolog中记录一个XID，它全局唯一的标识着这个事务。
+
+而当你设置`sync_binlog=1`时，做完了上面第一阶段写redolog后，mysql就会对应binlog并且会直接将其刷新到磁盘中。
+
+binlog结束的位置上也有一个XID。
+
+只要这个XID和redolog中记录的XID是一致的，MySQL就会认为binlog和redolog逻辑上一致。
+
+就上面的场景来说就会commit，而如果仅仅是rodolog中记录了XID，binlog中没有，MySQL就会RollBack
+```
+
+
+
+**两阶段提交设计的初衷 - 分布式事务**
+
+```
+其实两阶段提交更多的被使用在分布式事务的场景。
+
+我用大白话描述一个这样的场景，大家自行脑补一下：
+
+MySQL单机本来是支持事务的，但是这里所谓的分布式事务实际上指的是跨数据库、跨集群的事务。比如说你公司的业务太火爆了，每天都产生大量的数据，这些数据不仅单表存不下，甚至单库都存不下了（已经达到了服务器硬件存储的瓶颈）
+
+那你怎么办？是不是只能将单库拆分成多库？
+
+那你拆分成多库就会面临这样一个新的问题。假设Tom给Jerry转账，但是由于你拆分了数据库，原本在同库同表上的Tom和Jerry的信息，被你拆分进A库a表和B库b表。那你再发起转账逻辑时，万一失败了。如何回滚保证数据的安全？这就是分布式事务的要解决的问题。
+
+通常各大公司都有自己的支持分布式事务中间件，中间件的作用本质上就是处理好各个数据库节点之间两阶段提交的问题。
+
+简单来说：就是中间件要协调各个数据节点。
+
+**第一阶段**：中间件告诉各数据库节点，让它们开启XA事务，然后判断所有数据库节点是否已经处于prepare状态
+
+**第二阶段**：中间件判断事务提交还是回滚的阶段。如果所有节点都prepare那就统一提交。但凡出现一个失败的节点，统一回滚。
+
+```
+
+
+
+### 4、MySQL数据库日志：binlog、undolog、redolog
 
 [参考资料](https://segmentfault.com/a/1190000023827696)
 
-<img src="./Java笔记.assets/image-20210602210530696.png" alt="image-20210602210530696" style="zoom:150%;" />
+日志是 `mysql `数据库的重要组成部分，记录着数据库运行期间各种状态信息。
+
+ `mysql`日志主要包括错误日志、查询日志、慢查询日志、事务日志、二进制日志几大类。
+
+二进制日志( `binlog `)和事务日志(包括`redo log `和 `undo log `)
+
+------
+
+#### **binlog：**
+
+`binlog `用于**记录数据库执行的写入性操作(不包括查询)信息**，以**二进制的形式保存在磁盘**中。
+
+ `binlog `是 `mysql`的逻辑日志，并且由 `Server `层进行记录，使用任何存储引擎的 `mysql `数据库都会记录 `binlog `日志。
+
+- **逻辑日志**： 可以简单理解为记录的就是sql语句 。
+- **物理日志**： `mysql `数据最终是保存在数据页中的，物理日志记录的就是数据页变更 。
+
+`binlog `是通过追加的方式进行写入的，可以通过 `max_binlog_size `参数设置每个 `binlog`文件的大小，当文件大小达到给定值之后，会生成新的文件来保存日志。
+
+**binlog使用场景：**
+
+在实际应用中， `binlog `的主要使用场景有两个，分别是 **主从复制** 和 **数据恢复** 。
+
+1. **主从复制** ：在 `Master `端开启 `binlog `，然后将 `binlog `发送到各个 `Slave `端， `Slave `端重放 `binlog `从而达到主从数据一致。
+2. **数据恢复** ：通过使用 `mysqlbinlog `工具来恢复数据。
+
+**binlog刷盘时机：**
+
+对于 `InnoDB `存储引擎而言，只有在事务提交时才会记录 `biglog `，此时记录还在内存中，那么 `biglog`是什么时候刷到磁盘中的呢？
+
+ `mysql `通过 **`sync_binlog `参数**控制 `biglog `的刷盘时机，取值范围是 `0-N`：
+
+- 0：不去强制要求，由系统自行判断何时写入磁盘；
+- 1：每次 `commit `的时候都要将 `binlog `写入磁盘；
+- N：每N个事务，才会将 `binlog `写入磁盘。
+
+从上面可以看出， `sync_binlog `最安全的是设置是 `1 `，这也是 `MySQL 5.7.7`之后版本的默认值。但是设置一个大一些的值可以提升数据库性能，因此实际情况下也可以将值适当调大，牺牲一定的一致性来获取更好的性能。
+
+**binlog日志格式：**
+
+`binlog `日志有三种格式，分别为 `STATMENT `、 `ROW `和 `MIXED `。
+
+> 在 `MySQL 5.7.7 `之前，默认的格式是 `STATEMENT `， `MySQL 5.7.7 `之后，默认值是 `ROW `。日志格式通过 `binlog-format `指定。
+
+------
+
+#### **redo log：**
+
+**为什么需要redo log？**
+
+**为了保证事务的持久性**，mysql的InnoDB采用了WAL 技术，WAL 的全称是 Write-Ahead Logging，它的关键点就是先写日志，再写磁盘。
+
+有了 redo log，InnoDB 就可以保证即使数据库发生异常重启，之前提交的记录都不会丢失，这个能力称为crash-safe。
+
+```
+我们都知道，事务的四大特性里面有一个是 **持久性** ，
+
+具体来说就是**只要事务提交成功，那么对数据库做的修改就被永久保存下来了，不可能因为任何原因再回到原来的状态** 。
+
+那么 `mysql`是如何保证一致性的呢？
+
+最简单的做法是在每次事务提交的时候，将该事务涉及修改的数据页全部刷新到磁盘中。但是这么做会有严重的性能问题，主要体现在两个方面：
+
+1. 因为 `Innodb `是以 `页 `为单位进行磁盘交互的，而一个事务很可能只修改一个数据页里面的几个字节，这个时候将完整的数据页刷到磁盘的话，太浪费资源了！
+2. 一个事务可能涉及修改多个数据页，并且这些数据页在物理上并不连续，使用随机IO写入性能太差！
+```
+
+因此 `mysql `设计了 `redo log `， **具体来说就是只记录事务对数据页做了哪些修改**，这样就能完美地解决性能问题了(相对而言文件更小并且是顺序IO)。
+
+ `redo log`实现上采用了**大小固定，循环写入的方式，当写到结尾时，会回到开头循环写日志。**
+
+ <img src="Java笔记.assets\redolog循环.png" alt="img" style="zoom:50%;" />
+
+**redo log基本概念：**
+
+`redo log `包括两部分：一个是**内存中的日志缓冲( `redo log buffer `)**，另一个是**磁盘上的日志文件( ` redo log file `)**。
+
+ `mysql `每执行一条 `DML `语句，先将记录写入 `redo log buffer `，后续某个时间点再一次性将多个操作记录写到 `redo log file `。这种 **先写日志，再写磁盘** 的技术就是 `MySQL`里经常说到的 `WAL(Write-Ahead Logging) `技术。
+
+在计算机操作系统中，用户空间( `user space `)下的缓冲区数据一般情况下是无法直接写入磁盘的，中间必须经过操作系统内核空间( `
+kernel space `)缓冲区( `OS Buffer `)。因此， `redo log buffer `写入 `redo log file `实际上是先写入 `OS Buffer `，然后再通过系统调用 `fsync() `将其刷到 `redo log file `中，过程如下：
+
+ ![img](Java笔记.assets\redolog写入磁盘.png)
+
+`mysql `支持三种将 `redo log buffer `写入 `redo log file `的时机，可以通过 `
+innodb_flush_log_at_trx_commit ` 参数配置，各参数值含义如下：
+
+- **0（延迟写）：**  事务提交时不会将 `redo log buffer `中日志写入到 `os buffer `，而是每秒写入 `os buffer `并调用 `fsync() `写入到 `redo log file `中。也就是说设置为0时是(大约)每秒刷新写入到磁盘中的，当系统崩溃，会丢失1秒钟的数据。
+- **1（实时写，实时刷）：**  事务每次提交都会将 `redo log buffer `中的日志写入 `os buffer `并调用 `fsync() `刷到 `redo log file `中。这种方式即使系统崩溃也不会丢失任何数据，但是因为每次提交都写入磁盘，IO的性能较差。
+- **2（实时写，延迟刷）：**  每次提交都仅写入到 `os buffer `，然后是每秒调用 `fsync() `将 `os buffer `中的日志写入到 `redo log file `。
+
+ ![img](Java笔记.assets\logBuffer写入logfile三种方式.png)
 
 
+
+------
+
+#### **undo log：**
+
+数据库事务四大特性中有一个是 **原子性** ，具体来说就是 **原子性是指对数据库的一系列操作，要么全部成功，要么全部失败，不可能出现部分成功的情况**。实际上， **原子性** 底层就是通过 `undo log `实现的。 `undo log `主要记录了数据的逻辑变化，比如一条 ` INSERT
+`语句，对应一条 `DELETE `的 `undo log `，对于每个`UPDATE `语句，对应一条相反的 `UPDATE `的`
+undo log `，这样在发生错误时，就能回滚到事务之前的数据状态。同时， `undo log `也是 `MVCC `(多版本并发控制)实现的关键。
+
+------
+
+#### redo log与binlog区别：
+
+最开始 MySQL 里并没有 InnoDB 引擎。MySQL 自带的引擎是 MyISAM，但是 MyISAM没有 crash-safe 的能力，binlog 日志只能用于归档。而 InnoDB 是另一个公司以插件形式引入MySQL 的，既然只依靠 binlog 是没有 crash-safe 能力的，所以 InnoDB 使用另外一套日志系统——也就是 redo log 来实现 crash-safe 能力。
+
+|          | redo log                                                     | binlog                                                       |
+| :------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 文件大小 | `redo log `的大小是固定的。                                  | `binlog `可通过配置参数 `max_binlog_size `设置每个` binlog `文件的大小。 |
+| 实现方式 | `redo log `是 `InnoDB `引擎层实现的，并不是所有引擎都有。    | `binlog `是 `Server` 层实现的，所有引擎都可以使用 `binlog `日志 |
+| 记录方式 | redo log 采用循环写的方式记录，当写到结尾时，会回到开头循环写日志。 | binlog通过追加的方式记录，当文件大小大于给定值后，后续的日志会记录到新的文件上 |
+| 适用场景 | `redo log `适用于崩溃恢复(crash-safe)                        | `binlog `适用于主从复制和数据恢复                            |
+
+由 `binlog `和 `redo log `的区别可知： `binlog `日志只用于归档，只依靠 `binlog `是没有 `
+crash-safe `能力的。但只有 `redo log `也不行，因为 `redo log `是 `InnoDB `特有的，且日志上的记录落盘后会被覆盖掉。因此需要 `binlog `和 `redo log`二者同时记录，才能保证当数据库发生宕机重启时，数据不会丢失。
 
 
 
@@ -9284,7 +9927,7 @@ MySQL中每一种字符集都会对应一系列的校对规则。
 **I/O 线程** ：负责**从主服务器上读取二进制日志**，并**写入从服务器的中继日志（Relay log）**。
 **SQL 线程** ：负责**读取中继日志**，解析出**主服务器已经执行的数据更改并在从服务器中重放（Replay）。**
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210319114905984.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java工程.assets\主从复制.png)
 **读写分离**
 
 **主服务器处理写操作以及实时性要求比较高的读操作**，而**从服务器处理读操作**。
@@ -9296,7 +9939,7 @@ MySQL中每一种字符集都会对应一系列的校对规则。
 	
 读写分离常用**代理方式**来实现，**代理服务器接收应用层传来的读写请求**，然后决定**转发到哪个服务器。**
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210319115057679.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java工程.assets\主从复制2.png)
 
 
 ## 四、MySQL索引
@@ -9313,7 +9956,7 @@ MySQL中每一种字符集都会对应一系列的校对规则。
 
 B Tree 指的是 Balance Tree，也就是平衡树。平衡树是一颗查找树，并且所有叶子节点位于同一层。
 M=3 的 B树：
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20210318214735330.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\B-Tree.png)
 
 	B树（B-树）
 	    是一种多路搜索树（并不是二叉的）：所有叶子结点位于同一层；
@@ -9337,7 +9980,7 @@ M=3 的 B树：
 
 B+ Tree 是基于 B Tree 和叶子节点顺序访问指针进行实现，它具有 B Tree 的平衡性，并且通过顺序访问指针来提高区间查询的性能。
 M = 3 的B+树：
-![在这里插入图片描述](https://img-blog.csdnimg.cn/2021031821475610.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdfY2hhb2NoZW4=,size_16,color_FFFFFF,t_70)
+ ![在这里插入图片描述](.\Java笔记.assets\B+Tree.png)
 
 	B+树是B-树的变体，也是一种多路搜索树：
 	   其定义基本与B-树同，除了：
@@ -9359,9 +10002,9 @@ M = 3 的B+树：
 
 
 
-![814841311](/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/814841311.png)
+![814841311](./Java笔记.assets/814841311.png)
 
-![814946832](/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/814946832.png)
+![814946832](./Java笔记.assets/814946832.png)
 
 - **通过索引在B+树中查找数据页：**
 
@@ -9373,7 +10016,7 @@ M = 3 的B+树：
 3. 在真实存储用户记录的页中定位到具体的记录。
 ```
 
-<img src="/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/815054334.png" alt="815054334" style="zoom:50%;" />
+<img src="./Java笔记.assets/815054334.png" alt="815054334" style="zoom:50%;" />
 
 - **在数据页中快速查询记录：**
 
@@ -9385,7 +10028,7 @@ M = 3 的B+树：
 3. 每个组的最后一条记录的地址偏移量单独存储，组成页目录。
 ```
 
-![815000412](/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/815000412.png)
+![815000412](./Java笔记.assets/815000412.png)
 
 
 
@@ -9884,7 +10527,7 @@ select name, age from table where name = 'bill' and age = 18；
 
 ​			--带头大哥不能死，中间兄弟不能断
 
-![image-20210414231542588](Java笔记.assets/image-20210414231542588.png)
+ ![image-20210414231542588](Java笔记.assets/image-20210414231542588.png)
 
 **3、** **不在索引列上做任何操作（计算、函数、类型转换），会导致索引失效转向全表扫描**。
 			--索引列上少计算
@@ -9910,6 +10553,7 @@ select name, age from table where name = 'bill' and age = 18；
 	1、SQL语句的优化，充分利用索引
 	2、创建数据结构时，要尽量考虑到索引的使用，
 		复合索引在建立和使用时，尽量考虑在用户应用查询时，常用的排序方向和字段组合顺序。
+
 
 
 ### 7、数据库函数（用户数据库函数导入大的测试数据--上百万级别）
@@ -10540,7 +11184,7 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
 
  **1、缓存雪崩：缓存中的很多key失效，导致数据库负载过重宕机**
 
-![image-20210526164433906](/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/image-20210526164433906.png)
+![image-20210526164433906](./Java笔记.assets/image-20210526164433906.png)
 
     缓存在同一时间大面积失效，后面的请求都直接落到了数据库上，造成数据库短时间承受大量请求。
          
@@ -10556,7 +11200,6 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
          	2、设置不同的缓存失效时间
 
 
-​    
 ​    缓存雪崩的事前事中事后的解决方案
 ​    
 ​    	事前：redis高可用，主从+哨兵，redis cluster，避免全盘崩溃
@@ -10565,7 +11208,7 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
 
 
 
-![image-20210526164506790](/Users/chen/IdeaProjects/Java_Notes/Java笔记.assets/image-20210526164506790.png)
+![image-20210526164506790](./Java笔记.assets/image-20210526164506790.png)
 
 
 
@@ -10604,17 +11247,6 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
 
 [如何保证缓存(redis)与数据库(MySQL)的一致性？](https://developer.aliyun.com/article/712285)
 
-简单来讲，可以通过**Cache Aside Pattern（旁路缓存模式）**实现。
-
-该模式下，遇到写的请求时，**会更新 数据库，然后淘汰缓存** 。
-
-这种情况下，如果淘汰缓存失败，会导致数据不一致问题。
-
-1. **缓存失效时间变短**（不推荐，治标不治本） ：我们让缓存数据的过期时间变短，这样的话缓存就会从数据库中加载数据。另外，这种解决办法对于先操作缓存后操作数据库的场景不适⽤。
-2. **增加重试机制**（常⽤） ： 如果 cache 服务当前不可⽤导致缓存删除失败的话，我们就隔⼀段时间进⾏重试，重试次数可以⾃⼰定。如果多次重试还是失败的话，我们可以把当前更新失败的 key 存⼊队列中，等缓存服务可⽤之后，再将 缓存中对应的 key 删除即可  
-
-
-
 ```
 客户端对于数据库中数据的操作主要有读、写两种操作。
 读操作不会导致数据库和缓存中数据的不一致问题。
@@ -10630,6 +11262,8 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
   2、先更新数据库，再更新缓存；
   3、先淘汰缓存，再更新数据库；
   4、先更新数据库，再淘汰缓存。
+
+------
 
 **对于是更新缓存还是直接淘汰缓存？**
 
@@ -10659,7 +11293,7 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
 
 因此：**更新缓存消耗更大，多线程操作可能导致数据的不一致，因此直接淘汰缓存。**
 
-
+------
 
 **对于淘汰缓存和更新数据库的执行顺序问题：**
 
@@ -10671,6 +11305,8 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
 同时，对于主从结构数据库，也就是读操作放在从库、写操作放在主库的情况，还需要考虑主从延迟。
 这里讲一下单节点模式，也就是读写操作在同一台服务器上，底层只有一个数据库的情况。
 ```
+
+------
 
 **第一个问题：淘汰缓存和更新数据库需要先后执行，后一步执行失败的情况，哪种方案影响最小？**
 
@@ -10689,6 +11325,8 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
 ![_1](Java笔记.assets/b9e8e0ac8c37ca2b94471a1e070fe4ab7d85a480.png)
 
 **第二个问题：假设操作不会执行失败，但执行前一个操作后无法立即完成下一个操作，并发情况下导致数据不一致。**
+
+------
 
 **方案3：先淘汰缓存，再更新数据库。**
 
@@ -10742,9 +11380,9 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
 
 **可以通过串行化、延时双删等方法避免数据不一致问题；如果采用异步更新缓存的策略，就不会导致数据不一致**
 
+------
 
-
-**方案4：先更新数据库，再淘汰缓存**
+##### **方案4：先更新数据库，再淘汰缓存**
 
 ```
 在正常情况下：
@@ -10779,17 +11417,31 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
 
 解决方案：**使用“重试机制”，如果淘汰缓存失败就报错，然后重试直到成功**。
 
+------
 
+简单来讲，可以通过**Cache Aside Pattern（旁路缓存模式）**实现。
+
+该模式下，遇到写的请求时，**会更新 数据库，然后淘汰缓存** 。
+
+这种情况下，如果淘汰缓存失败，会导致数据不一致问题。
+
+1. **缓存失效时间变短**（不推荐，治标不治本） ：我们让缓存数据的过期时间变短，这样的话缓存就会从数据库中加载数据。另外，这种解决办法对于先操作缓存后操作数据库的场景不适⽤。
+2. **增加重试机制**（常⽤） ： 如果 cache 服务当前不可⽤导致缓存删除失败的话，我们就隔⼀段时间进⾏重试，重试次数可以⾃⼰定。如果多次重试还是失败的话，我们可以把当前更新失败的 key 存⼊队列中，等缓存服务可⽤之后，再将 缓存中对应的 key 删除即可  
+
+------
 
 **两种方案对比：**
 
 ```
-先淘汰cache，再更新数据库：
-  采用同步更新缓存的策略，可能会导致数据长时间不一致，如果用延迟双删来优化，还需要考虑究竟需要延时多长时间的问题——读的效率较高，但数据的一致性需要靠其它手段来保证
-  采用异步更新缓存的策略，不会导致数据不一致，但在数据库更新完成之前，都需要到数据库层面去读取数据，读的效率不太好——保证了数据的一致性，适用于对一致性要求高的业务
+1、先淘汰cache，再更新数据库：
+	采用同步更新缓存的策略，可能会导致数据长时间不一致，如果用延迟双删来优化，还需考虑究竟需要延时多长时间的问题
+		——读的效率较高，但数据的一致性需要靠其它手段来保证
+	采用异步更新缓存的策略，不会导致数据不一致，但在数据库更新完成之前，都需要到数据库层面读取数据，读的效率不太好
+		——保证了数据的一致性，适用于对一致性要求高的业务
   
-先更新数据库，再淘汰cache：
-  无论是同步/异步更新缓存，都不会导致数据的最终不一致，在更新数据库期间，cache中的旧数据会被读取，可能会有一段时间的数据不一致，但读的效率很好——保证了数据读取的效率，如果业务对一致性要求不是很高，这种方案最合适
+2、先更新数据库，再淘汰缓存：
+  无论是同步/异步更新缓存，都不会导致数据的最终不一致，在更新数据库期间，缓存中的旧数据会被读取，可能会有一段时间的数据不一致，但读的效率很好
+  		——保证了数据读取的效率，如果业务对一致性要求不是很高，这种方案最合适
 
 【其它】
 重试机制可以采利用“消息队列MQ”来实现
