@@ -2442,6 +2442,8 @@ java -Xms1M -Xmx2M HackTheJava
 		survivor0 : 1/10 的新生代空间
 		survivor1 : 1/10 的新生代空间
 
+![img](Java笔记.assets\堆内存空间分配.png)
+
 ### 5、方法区
 
 方法区是一块所有**线程共享**的**内存逻辑区域**，JVM中只有一个方法区，用来存储一些线程可共享内容。
@@ -2879,7 +2881,7 @@ G1收集器使用的是“标记-整理”算法，进行了空间整合，降�
 ps. >> 有Major GC的说法，看作回收老年代
 
 
-### 2、内存分配策略---JVM调优
+### 2、内存分配策略
 
 **1、对象优先在Eden分配**
 大多数情况下，对象在新生代Eden上分配，当Eden空间不够时，发起Minor GC。
@@ -2932,6 +2934,24 @@ Full GC的触发条件：
 **5、Concurrent Mode Failure**
 
 执行CMS GC的过程中同时有对象要放入老年代，而此时**老年代空间不足**(可能是**GC过程中浮动垃圾过多导致暂时性的空间不足**)，便会报**Concurrent Mode Failure错误，触发Full GC。**
+
+
+
+### 如何避免频繁的Full GC？
+
+- 针对老年代空间不足触发的Full GC：
+
+  1、尽量不要创建过大的对象及数组。
+  2、还可以通过-Xmn虚拟机参数调大新生代的大小，让对象尽量在新生代被回收，不进入老年代。
+  3、还可以通过 -XX:MaxTenuringThreshold 调大对象进入老年代的年龄，让对象在新生代多存活一段时间。
+
+- 针对JDK1.7版本中永久代空间不足：
+
+  1、增大永久代空间
+
+  2、使用 CMS GC。
+
+
 
 ## 面试题：Java对象的创建过程/new一个对象的过程？
 
@@ -5194,10 +5214,39 @@ public V put(K key, V value) {
 
 ##### **1、CAS**
 
+[CAS你以为你真的懂？](https://zhuanlan.zhihu.com/p/126384164)
+
 乐观锁需要 **操作**和**冲突检测**两个步骤具备**原子性**。
 
 硬件支持的原子性操作最典型的是：**比较并交换**（Compare-and-Swap，CAS）。
+
+是一条CPU并发原语。它的功能是判断内存某个位置的值是否为预期值,如果是则更新为新的值,这个过程是原子的。
+
 **CAS 指令需要有 3 个操作数，分别是内存地址 V、旧的预期值 A 和新值 B。当执行操作时，只有当 V 的值等于 A，才将 V 的值更新为 B。**
+
+```java
+// native 修饰的方法 
+public final native boolean compareAndSwapInt(Object var1, long var2, int var4, int var5);
+
+```
+
+
+
+`sun.misc.Unsafe` 这个类 ---->  `hotspot\src\share\vm\prims\unsafe.cpp`---> `hotspot\src\share\vm\runtime\atomic.cpp` ---->如果是Linux x86架构的话，底层实现是 `hotspot\src\os_cpu\linux_x86\vm\atomic_linux_x86.inline.hpp`：
+
+x86中对应的机器指令是 CMPXCHG(CPU层级的指令) ，如果是多处理器架构的话会有 LOCK 前缀。
+
+```text
+#define LOCK_IF_MP(mp) "cmp $0, " #mp "; je 1f; lock; 1: "
+```
+
+从方法名字看lock if mp ，mp的全称是Multi Processor，多cpu，意思是什么呢，就是看你操作系统有多少个处理器，若果只有一个cpu一核的话就不需要原子性了，一定是顺序执行的，如果是多核心多cpu前面就要加lock，所以最后能够实现CAS的汇编指令就被我们揪出来了。***最终的汇编指令是lock cmpxchg 指令，lock指令在执行后面指令的时候锁定一个北桥信号\***(锁定北桥信号比锁定总线轻量一些，感兴趣的自己百度)。
+
+所以***如果你是多核或者多个cpu，CPU在执行cmpxchg指令之前会执行lock锁定总线，实际是锁定北桥信号。我不释放这把锁谁也过不去，以此来保证cmpxchg的原子性\***。
+
+**lock cmpxch**
+
+
 
 
 
@@ -5229,6 +5278,15 @@ public final int getAndAddInt(Object var1, long var2, int var4) {
     return var5;
 }
 ```
+
+UnSafe类是CAS的核心类由于Java 方法无法直接访问底层，需要通过本地(native)方法来访问，基于该类可以直接操作特额定的内存数据.UnSafe类在于sun.misc包中，其内部方法操作可以向C的指针一样直接操作内存,因为Java中CAS操作的助兴依赖于UNSafe类的方法。
+
+- 变量ValueOffset：它是该变量在内存中的偏移地址,因为UnSafe就是根据内存偏移地址获取数据的
+- 变量value：被volatile修饰,保证了多线程之间的可见性. 
+
+注意：UnSafe类中所有的方法都是native修饰的,也就是说UnSafe类中的方法都是直接调用操作底层资源执行响应的任务。
+
+
 
 ##### **3、ABA**
 
@@ -10595,6 +10653,18 @@ Redis还支持事务、持久化、Lua脚本、多种集群方案等。
 - 用作缓存队列
 - 发布订阅场景
 
+
+
+#### 为什么redis快？
+
+（1）redis是运行在内存的，自然就快
+
+（2）redis的数据结构简单，操作节省时间
+
+（3）redis是**单线程（基于内存，单线程不会让cpu成为瓶颈）**的，**节省了上下文切换时间**。**采用了多路复用io阻塞机制**，一个线程可以复用多个连接，自然就读取速度快。
+
+
+
 ### 2、分布式缓存常见技术选型方案（Redis、Memcached）及异同：
 
 ```
@@ -11383,6 +11453,8 @@ Redis可以通过**MULTI、EXEC、DISCARD和WATCH**等命令来**实现事务**�
 ------
 
 ##### **方案4：先更新数据库，再淘汰缓存**
+
+先更新数据库，再删除缓存。并增加重试机制，将二者放到一个MQ中，避免出现缓存删除失败的问题。
 
 ```
 在正常情况下：
