@@ -4060,6 +4060,10 @@ public synchronized static void fun() {
 
 #### ReentrantLock工作原理：
 
+[ReentrantLock原理](https://blog.csdn.net/fuyuwei2015/article/details/83719444)
+
+主要通过CAS + AQS进行实现
+
 	state 初始化为 0，表示未锁定状态。 
 	A 线程 lock()时，会调⽤tryAcquire()独占该锁并将 state+1。
 	此后，其他线程再 tryAcquire()时就会失败，直到 A 线程unlock()到 state=0（即释放锁）为⽌，其它线程才有机会获取该锁。
@@ -4108,6 +4112,52 @@ public static void main(String[] args) {
 
 因为synchronized是JVM实现的一种锁机制，JVM原生地支持它，而ReentrantLock不是所有JDK版本都支持。同时使用synchronized不用担心没有释放锁导致的死锁问题，因为JVM会保证锁的释放。
 ```
+
+
+
+### ReentrantLock实现公平锁：
+
+![img](Java笔记.assets\lock公平锁.png)
+
+
+
+在`tryAcquire()`的实现中使用了`hasQueuedPredecessors()`保证了线程先进先出FIFO的使用锁，不会产生"饥饿"问题，
+
+
+
+```java
+// ReentrantLock.FairSync.tryAcquire()
+protected final boolean tryAcquire(int acquires) {
+    final Thread current = Thread.currentThread();
+    int c = getState();
+    // 状态变量的值为0，说明暂时还没有线程占有锁
+    if (c == 0) {
+        // hasQueuedPredecessors()保证了不论是新的线程还是已经排队的线程都顺序使用锁
+        if (!hasQueuedPredecessors() &&
+            compareAndSetState(0, acquires)) {
+            // 当前线程获取了锁，并将本线程设置到exclusiveOwnerThread变量中，
+            //供后续自己可重入获取锁作准备
+            setExclusiveOwnerThread(current);
+            return true;
+        }
+    }
+    
+    // 之所以说是重入锁，就是因为在获取锁失败的情况下，还会再次判断是否当前线程已经持有锁了
+    else if (current == getExclusiveOwnerThread()) {
+        int nextc = c + acquires;
+        if (nextc < 0)
+            throw new Error("Maximum lock count exceeded");
+        // 设置到state中
+        // 因为当前线程占有着锁，其它线程只会CAS把state从0更新成1，是不会成功的
+        // 所以不存在竞争，自然不需要使用CAS来更新
+        setState(nextc);
+        return true;
+    }
+    return false;
+}
+```
+
+tryAcquire都会检查CLH队列中是否仍有前驱的元素，如果仍然有那么继续等待，通过这种方式来保证先来先服务的原则。
 
 
 
@@ -4169,7 +4219,7 @@ wait/notify 等⽅法也依赖于 monitor 对象，这就是为什么只有在�
 
 **任意线程对Object的访问，首先要获得对象监视器Monitor，如果获取失败，该线程就进入同步队列，线程状态变为BLOCKED，当对象监视器占有者释放后，在同步队列中得线程就会有机会重新获取该监视器。**
 
-
+![image-20210810224613566](Java笔记.assets\waitNotify.png)
 
 ### 可重入锁：
 
@@ -4530,9 +4580,15 @@ AQS 使⽤ **CAS** 对该同步状态**进行原子操作实现对其值的修�
 [同步状态的获取与释放](https://blog.csdn.net/yanghan1222/article/details/80248494?spm=1001.2014.3001.5501)
 
 AQS有**独占（公平、非公平）**和**共享**两种资源共享方式。
+
+```java
+ //公平锁和非公平锁的变量
+private final Sync sync;
+```
+
 AQS底层使用了**模板方法模式**。
 
-1、tryAcquire：是自定义AQS实现的。该方法保证线程安全的获取同步状态，获取成功返回true，获取失败则返回false
+1、tryAcquire()：是自定义AQS实现的。该方法保证线程安全的获取同步状态，获取成功返回true，获取失败则返回false
 
 2、addWaiter：如果tryAcquire返回false，也就是获取同步状态失败，这时候则构造同步节点（独占式）EXCLUSIVE，调用该方法将节点加入到同步队列尾部
 
@@ -5220,7 +5276,7 @@ public V put(K key, V value) {
 
 硬件支持的原子性操作最典型的是：**比较并交换**（Compare-and-Swap，CAS）。
 
-是一条CPU并发原语。它的功能是判断内存某个位置的值是否为预期值,如果是则更新为新的值,这个过程是原子的。
+是一条CPU并发原语。它的功能是判断内存某个位置的值是否为预期值,如果是则更新为新的值。在Java中，CAS主要是由sun.misc.Unsafe这个类通过JNI调用CPU底层指令实现。
 
 **CAS 指令需要有 3 个操作数，分别是内存地址 V、旧的预期值 A 和新值 B。当执行操作时，只有当 V 的值等于 A，才将 V 的值更新为 B。**
 
@@ -5232,7 +5288,7 @@ public final native boolean compareAndSwapInt(Object var1, long var2, int var4, 
 
 
 
-`sun.misc.Unsafe` 这个类 ---->  `hotspot\src\share\vm\prims\unsafe.cpp`---> `hotspot\src\share\vm\runtime\atomic.cpp` ---->如果是Linux x86架构的话，底层实现是 `hotspot\src\os_cpu\linux_x86\vm\atomic_linux_x86.inline.hpp`：
+**`sun.misc.Unsafe` 这个类** ---->  `hotspot\src\share\vm\prims\unsafe.cpp`---> `hotspot\src\share\vm\runtime\atomic.cpp` ---->如果是Linux x86架构的话，底层实现是 `hotspot\src\os_cpu\linux_x86\vm\atomic_linux_x86.inline.hpp`：
 
 x86中对应的机器指令是 CMPXCHG(CPU层级的指令) ，如果是多处理器架构的话会有 LOCK 前缀。
 
@@ -8430,7 +8486,7 @@ ServerBootstrap 通过 bind 方法创建/管理连接
 **4、消息队列（Message Queuing）**：消息队列是消息的链表，具有特定的格式，存放在内存中并由消息队列标识符标识。匿名管道存放于内存中的文件，有名管道存在于实际的磁盘介质或文件系统，消息队列存放在内核中，只有在内核重启或显式地删除一个消息队列时才会被删除。消息队列可以实现消息的随机查询，消息不一定先进先出次序读取，也可以按消息的类型读取。**消息队列克服了信号承载信息量少、管道只能承载无格式字节流及缓冲区大小受限等缺陷。**
 **5、信号量（Semaphores）**：信号量是一个计数器，用于多线程对共享数据的访问，完成进程间同步。可以解决与同步相关的问题并避免竞争条件。
 **6、共享内存（Shared memory）**：多个进程可以访问同一块内存空间，不同进程可以及时看到对方进程中对共享内存中数据的更新。这种方式需要依靠互斥锁、信号量等同步操作。最有效的进程间通信方式。
-**7、套接字（Sockets）**：主要用于客户端和服务器之间通过网络进行通信。套接字是支持TCP/IP 网络通信的基本操作单元，可以看作不同主机之间的进程进行双向通信的端点，用套接字中的相关函数完成通信过程。
+**7、套接字（Socket）**：主要用于客户端和服务器之间通过网络进行通信。套接字是支持TCP/IP 网络通信的基本操作单元，可以看作不同主机之间的进程进行双向通信的端点，用套接字中的相关函数完成通信过程。
 
 ### 6、线程间的同步方式？
 
