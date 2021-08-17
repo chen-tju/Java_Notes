@@ -443,11 +443,11 @@ public class CloneExample implements Cloneable {....}
 
 ## 21、JRE & JDK
 
-JRE: 
+**JRE: **
 Java Runtime Environment, Java运行环境，为Java的运行提供所需环境。
 是一个JVM程序，主要包括了JVM的标准实现和一些Java基本类库。
 
-JDK：
+**JDK：**
 Java Development Kit，Java开发工具包，提供了Java的开发及运行环境。
 JDK是Java开发的核心，集成了JRE和一些其它的工具，比如编译Java源码的编译器javac等。
 
@@ -2970,7 +2970,7 @@ Full GC的触发条件：
 
 
 
-## 面试题：Java对象的创建过程/new一个对象的过程？
+## 面试题：new一个对象的过程？
 
 <img src=".\Java笔记.assets\创建对象的过程.png" alt="在这里插入图片描述" style="zoom:150%;" />
 
@@ -3572,26 +3572,60 @@ start() 方法会执行线程的相应准备工作，然后自动执行run()方�
 1、通过构造方法实现：ThreadPoolExecutor
 2、通过Executor框架的工具类Executors实现---三种ThreadPoolExecutor
 
-**线程池参数：**
+
+
+#### **线程池参数：**
+
+- 1、**corePoolSize：线程池核心线程大小**
+
+  - 核心线程会一直存活，及时没有任务需要执行
+  - 当线程数小于核心线程数时，即使有线程空闲，线程池也会优先创建新线程处理
+  - 设置allowCoreThreadTimeout=true（默认false）时，核心线程会超时关闭
+  - 当前线程数等于corePoolSize，说明核心线程数满了，继续提交的任务会被保存在阻塞队列中等待执行
+
+- 2、**maximumPoolSize：线程池最大线程数量**
+
+  - 当线程数>=corePoolSize，且任务队列已满时。线程池会创建新线程来处理任务
+  - 当线程数=maxPoolSize，且任务队列已满时，线程池会拒绝处理任务而抛出异常
+
+- 3、**keepAliveTime 空闲线程存活时间**--线程没有任务执行时，线程可存活的时间
+
+  - 当线程空闲时间达到keepAliveTime时，线程会退出，直到线程数量=corePoolSize
+  - 如果allowCoreThreadTimeout=true，则会直到线程数量=0
+
+- 4、**timeunit 空闲线程存活时间单位**
+
+- 5、**workQueue 工作队列**：用来保存等待被执行的任务的阻塞队列。
+
+  - （ArrayBlockingQueue、LinkedBlockingQueue、SynchronousQueue、PriorityBlockingQueue）
+
+  - 当核心线程数达到最大时，新任务会放在队列中排队等待执行
+
+- 6、**threadFactory 线程工厂**：设置线程属性（线程名，是否为守护线程等）
+
+- 7、**RejectedExecutionHandler（饱和拒绝策略）**
+
+  - 1、ThreadPoolExecutor.AbortPolicy:
+    当线程池中的数量等于最大线程数时抛 java.util.concurrent.RejectedExecutionException 异常，涉及到该异常的任务也不会被执行，线程池默认的拒绝策略就是该策略。
+  - 2、ThreadPoolExecutor.DiscardPolicy()：
+    当线程池中的数量等于最大线程数时,默默丢弃不能执行的新加任务，不报任何异常。
+  - 3、ThreadPoolExecutor.CallerRunsPolicy():
+    当线程池中的数量等于最大线程数时，重试添加当前的任务；它会自动重复调用execute()方法。
+  - 4、ThreadPoolExecutor.DiscardOldestPolicy():
+    当线程池中的数量等于最大线程数时,抛弃线程池中工作队列头部的任务(即等待时间最久的任务)，并执行当前任务。
+
+![在这里插入图片描述](Java笔记.assets/2021033117181239.png)
 
 ```
-1、corePoolSize：线程池核心线程大小
-2、maximumPoolSize：线程池最大线程数量
-3、keepAliveTime 空闲线程存活时间
-4、timeunit 空闲线程存活时间单位
-5、workQueue 工作队列（ArrayBlockingQueue、LinkedBlockingQueue、SynchronousQueue、PriorityBlockingQueue）
-6、threadFactory 线程工厂
-7、RejectedExecutionHandler（饱和拒绝策略）
+1、判断下当前线程池存活的线程数是否低于corePoolSize，如果低于corePoolSize就创建线程来执行；如果达到corePoolSize就把任务放入到workQueue里等待任务调度执行。
+2、当工作队列workQueue存满任务，且存活线程数大于corePoolSize但是低于maximumPoolSize时，也通过创建线程来执行。如果线程数达到maximumPoolSize了，继续提交任务就交由RejectedExecutionHandler来执行拒绝操作。
 
-	1、ThreadPoolExecutor.AbortPolicy:
-      当线程池中的数量等于最大线程数时抛 java.util.concurrent.RejectedExecutionException 异常，涉及到该异常的任务也不会被执行，线程池默认的拒绝策略就是该策略。
-    2、ThreadPoolExecutor.DiscardPolicy()：
-      当线程池中的数量等于最大线程数时,默默丢弃不能执行的新加任务，不报任何异常。
-    3、ThreadPoolExecutor.CallerRunsPolicy():
-      当线程池中的数量等于最大线程数时，重试添加当前的任务；它会自动重复调用execute()方法。
-    4、ThreadPoolExecutor.DiscardOldestPolicy():
-      当线程池中的数量等于最大线程数时,抛弃线程池中工作队列头部的任务(即等待时间最久的任务)，并执行当前任务。
+如果线程池中线程数超过corePoolSize，且线程空闲下来时，超过空闲keepAliveTime就会被销毁。
 ```
+
+
+
+
 
 **线程池加入任务的步骤：**
 
@@ -3796,7 +3830,7 @@ future.cancel(true);
 
 
 
-## 线程间的通信方式：
+## 面试题：线程间的通信方式：
 
 > 线程通信就是当多个线程共同操作共享的资源时，互相告知自己的状态以避免资源争夺。
 
