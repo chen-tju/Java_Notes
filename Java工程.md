@@ -584,6 +584,11 @@ Elasticsearch 是一个分布式的搜索与分析引擎。
 
 Mysql基于B+树索引，来实现快速检索，ES则基于**倒排索引**，对于文档搜索来说，倒排索引在性能和空间上都有更加明显的优势。
 
+**倒排索引**-----**用内容去匹配索引**
+
+- 传统的保存数据的方式都是：记录→单词
+- 而倒排索引的保存数据的方式是：单词→记录
+
 
 
 ## 项目中的ES
@@ -2719,8 +2724,6 @@ Spring Bean 定义的继承与 Java 类的继承无关，但是继承的概念�
 
 
 
-
-
 ## 9、Spring 事务
 
 ### 1、Spring管理事务的方式：
@@ -2772,6 +2775,55 @@ Spring Bean 定义的继承与 Java 类的继承无关，但是继承的概念�
 关于 `@Transactional ` 注解推荐阅读的文章：
 
 - [透彻的掌握 Spring 中@transactional 的使用](https://www.ibm.com/developerworks/cn/java/j-master-spring-transactional-use/index.html)
+
+
+
+
+
+
+
+## 10、@Async
+
+![img](Java工程.assets\Async.jpg)
+
+### **@Async异步调用**
+
+- @Async也是通过AOP（切面）实现的，与@Transactional相同
+- 添加@Async注释的方法必须是public。因为AOP的本质是动态代理，动态代理要求方法必须是public
+- @Async必须是跨类调用，原因也是同类直接调用无法被动态代理
+- 需要添加@EnableAsync注解
+
+@Async异步调用分为两种，一种是无返回值调用，一种是有返回值调用。我们先来看最简单的无返回值调用。
+
+TestAsyncService 调用 AsyncService中的 testAsyncSimple函数
+
+### **@Async线程池**
+
+默认情况下，Spring 使用 `SimpleAsyncTaskExecutor`初始化线程池。每次执行客户提交给它的任务时，它会启动新的线程，并允许开发者控制并发线程的上限（concurrencyLimit），从而起到一定的资源节流作用。默认时，concurrencyLimit取值为-1，即不启用资源节流。
+
+@Async也支持使用指定线程池，你可以指定线程池的各项参数。
+
+
+
+### **@Async事务**
+
+- **@Transactional 调用具有 @Async 的子函数，事务不生效**
+- **@Async 调用具有 @Transactional 的子函数，事务生效**
+
+先说第一点，如果@Transactional先于@Async切面执行，但由于spring事务管理依赖的是`ThreadLocal`，所以在开启的异步线程里面感知不到事务，说细点就是在Spring开启事务之后，会设置一个连接到当前线程，但这个时候又开启了一个新线程，执行实际的SQL代码时，通过ThreadLocal获取不到连接就会开启新连接，也不会设置`autoCommit`，所以这个函数整体将没有事务。
+
+这样第二点也就很容易理解，@Async先执行，@Transactional使用的ThreadLocal依然是@Async开启的新线程中的ThreadLocal，所以事务生效。
+
+### **@Async异常处理**
+
+异常处理分为无返回值和有返回值两种。
+
+- 无返回值通过实现`AsyncConfigurer`接口来处理异常
+- 有返回值通过`Future.get()`返回异常，通过正常的try...catch捕获异常即可
+
+先来看无返回值的情况，定义异常捕获配置类`AsyncExceptionConfig`，配置类里面定义SpringAsyncExceptionHandler 方法实现`AsyncUncaughtExceptionHandler` 接口。
+
+
 
 
 
