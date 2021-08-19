@@ -2506,7 +2506,9 @@ MethodInterceptor：动态代理的方法调用都会转发到intercept()上进�
 
  ![img](C:\Users\Administrator\Desktop\job\Java_Notes\Java工程.assets\两种动态代理方式对比)
 
+JDK调用代理方法，是通过反射机制调用，Cglib是通过**FastClass机制直接调用方法，Cglib执行效率更高。**
 
+ 
 
 
 
