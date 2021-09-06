@@ -98,7 +98,91 @@ wms_ware_sku
 		事务体现在消息的执行中，在消息系统中开启事务，是一种消息的事务，保证消息被正常消费，否则回滚的一种机制
 
 
-### 4、消息队列的中间件
+
+### 分布式事务实现方案
+
+现在的分布式事务实现方案有多种，有些已经被淘汰，如基于XA的两段式提交、TCC解决方案，还有本地消息表、MQ事务消息，还有一些开源的事务中间件，如LCN、GTS。
+
+#### 1、基于XA的两阶段提交方案
+
+　　XA 它包含两个部分：事务管理器和本地资源管理器。其中本地资源管理器往往由数据库实现，比如 Oracle、DB2 这些商业数据库都实现了 XA 接口，而事务管理器作为全局的协调者，负责各个本地资源的提交和回滚。
+
+　　两阶段提交方案应用非常广泛，几乎所有商业OLTP (On-Line Transaction Processing)数据库都支持XA协议。但是两阶段提交方案开发复杂、锁定资源时间长，对性能影响很大，基本不适合解决微服务事务问题。
+
+![img](Java工程.assets\XA两阶段提交.png)
+
+#### 2、TCC解决方案
+
+　　TCC方案在电商、金融领域落地较多。TCC方案其实是两阶段提交的一种改进。其将整个业务逻辑的每个分支显式的分成了Try、Confirm、Cancel三个操作。
+
+- Try 阶段主要是对业务系统做检测及资源预留，完成业务的准备工作。
+- Confirm 阶段主要是对业务系统做确认提交，Try阶段执行成功并开始执行 Confirm阶段时，默认 Confirm阶段是不会出错的。即：只要Try成功，Confirm一定成功。
+- Cancel 阶段主要是在业务执行错误，需要回滚的状态下执行的业务取消，预留资源释放。
+
+　　基本原理如下图所示：
+
+![img](Java工程.assets\TCC解决方案.png)
+
+　　事务开始时，业务应用会向事务协调器注册启动事务。之后业务应用会调用所有服务的try接口，完成一阶段准备。之后事务协调器会根据try接口返回情况，决定调用confirm接口或者cancel接口。如果接口调用失败，会进行重试。
+
+　　微服务倡导服务的轻量化、易部署，而TCC方案中很多事务的处理逻辑需要应用自己编码实现，复杂且开发量大。
+
+#### 3、本地消息表 (异步确保)
+
+　　本地消息表是国外的 ebay 搞出来的一套方案，如图所示：
+
+![img](Java工程.assets\本地消息表.png)
+
+　　我们首先需要在本地数据新建一张本地消息表，然后我们必须还要一个MQ（不一定是mq，但必须是类似的中间件）。
+
+　　消息表怎么创建呢？这个表应该包括这些字段： id, biz_id, biz_type, msg, msg_result, msg_desc,atime,try_count。分别表示uuid，业务id，业务类型，消息内容，消息结果（成功或失败），消息描述，创建时间，重试次数， 其中biz_id，msg_desc字段是可选的。
+
+　　实现思路为：
+
+- A 系统在自己本地一个事务里操作同时，插入一条数据到消息表；
+- 接着 A 系统将这个消息发送到 MQ 中去；
+- B 系统接收到消息之后，在一个事务里，往自己本地消息表里插入一条数据，同时执行其他的业务操作，如果这个消息已经被处理过了，那么此时这个事务会回滚，这样**保证不会重复处理消息**；
+- B 系统执行成功之后，就会更新自己本地消息表的状态以及 A 系统消息表的状态；
+- 如果 B 系统处理失败了，那么就不会更新消息表状态，那么此时 A 系统会定时扫描自己的消息表，如果有未处理的消息，会再次发送到 MQ 中去，让 B 再次处理；
+- 这个方案保证了最终一致性，哪怕 B 事务失败了，但是 A 会不断重发消息，直到 B 那边成功为止。
+
+　　这个方案**严重依赖于数据库的消息表来管理事务，这样在高并发的情况下难以扩展，同时要在数据库中额外添加一个与实际业务无关的消息表来实现分布式事务，繁琐。**
+
+#### **4、MQ事务消息**
+
+　　直接基于 MQ 来实现事务，不再用本地的消息表。有一些第三方的MQ是支持事务消息的，比如RocketMQ，他们支持事务消息的方式也是类似于采用的二阶段提交，但是市面上一些主流的MQ都是不支持事务消息的，比如 RabbitMQ 和 Kafka 都不支持。
+
+**![img](Java工程.assets\MQ.png)**
+
+　　实现思想为：
+
+- A 系统先发送一个 prepared 消息到 mq，如果这个 prepared 消息发送失败那么就直接取消操作别执行了；
+- 如果这个消息发送成功过了，那么接着执行本地事务，如果成功就告诉 mq 发送确认消息，如果失败就告诉 mq 回滚消息；
+- 如果发送了确认消息，那么此时 B 系统会接收到确认消息，然后执行本地的事务；
+- mq 会自动**定时轮询**所有 prepared 消息回调你的接口，问你，这个消息是不是本地事务处理失败了，所有没发送确认的消息，是继续重试还是回滚？一般来说这里你就可以查下数据库看之前本地事务是否执行，如果回滚了，那么这里也回滚吧。这个就是避免可能本地事务执行成功了，而确认消息却发送失败了。
+- 这个方案里，要是系统 B 的事务失败了咋办？重试咯，自动不断重试直到成功，如果实在是不行，要么就是针对重要的资金类业务进行回滚，比如 B 系统本地回滚后，想办法通知系统 A 也回滚；或者是发送报警由人工来手工回滚和补偿。
+
+　　这种方案缺点就是实现难度大，而且主流MQ不支持。
+
+#### 5、分布式事务中间件解决方案
+
+　　分布式事务中间件其本身并不创建事务，而是基于对本地事务的协调从而达到事务一致性的效果。典型代表有：阿里的GTS（https://www.aliyun.com/aliware/txc）、开源应用LCN。
+
+　　其实现原理如下：
+
+![img](Java工程.assets\分布式事务中间件.png)
+
+
+
+
+
+
+
+
+
+### 4、消息队列
+
+消息队列，一般我们会简称它为MQ(Message Queue),消息队列中间件是分布式系统中重要的组件，主要解决应用解耦，异步消息，流量削锋等问题，实现高性能，高可用，可伸缩和最终一致性架构。目前使用较多的消息队列有ActiveMQ，RabbitMQ，ZeroMQ，Kafka，MetaMQ，RocketMQ 。
 
 	消息队列，也叫消息中间件。消息的传输过程中保存消息的容器。
 	1 activeMq，由apache开发，基于jms的接口规则
@@ -106,6 +190,34 @@ wms_ware_sku
 	3 kafka，大数据的消息中间件
 	4 zeroMq，基于socket协议
 	5 mateMq，阿里的产品
+
+把要传输的数据放在队列中。
+
+生产和消费消息的示意图如下图所示。
+
+![img](Java工程.assets\生产者.png)
+
+消息生产者即发送消息的一方，也叫消息发送者，发送消息到指定的消息队列中。生产者将消息M发送到队列中。消息M在队列中冗余分布，存在多个副本。
+
+ 
+
+![img](Java工程.assets\消费者5.png)
+
+ 
+
+消费消息的一方，也叫消息接收者，通过调用消息服务的消费接口从队列中读取消息。消费者从队列中消费消息，获取到消息M。在消费者消费消息M期间，消息M仍然停留在队列中，但消息M从被消费开始的30秒内不能被该消费组再次消费，若在这30秒内没有被消费者确认消费完成，则DMS认为消息M未消费成功，将可以被继续消费。
+
+ 
+
+![img](Java工程.assets\消费.png)
+
+消费者确认消息M消费完成，消息M将不能被该消费者所在消费组消费。消息M仍然保持在队列中，并且可以被其它消费组消费，消息在队列中的保留时间为至少72小时（除非队列被删除），72小时后将会被删除。
+
+ 
+
+
+
+
 
 ### 5、broker
 
@@ -3973,6 +4085,63 @@ public String checkCart(String isChecked, String skuId, HttpServletRequest reque
 #  --------------------------------------------------------------------------———————————————————————————————
 
 # MyBatis
+
+
+
+```java
+ public static void main(String[] args) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
+//加载数据库驱动
+            Class.forName("com.mysql.jdbc.Driver");
+//通过驱动管理类获取数据库链接
+            connection = DriverManager
+                    .getConnection("jdbc:mysql://localhost:3306/zhang?characterEncoding=utf-8","root", "123456");
+//定义 sql 语句 ?表示占位符
+            String sql = "select * from emp where empno = ?";
+//获取预处理 statement
+            preparedStatement = connection.prepareStatement(sql);
+//设置参数，第一个参数为 sql 语句中参数的序号（从 1 开始），第二个参数为设置的参数值
+            preparedStatement.setInt(1, 1001);
+//向数据库发出 sql 执行查询，查询出结果集
+            resultSet = preparedStatement.executeQuery();
+//遍历查询结果集
+            while(resultSet.next()){
+                System.out.println(resultSet.getString("empno")+"-- "+resultSet.getString("ename"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally{
+//释放资源
+            if(resultSet!=null){
+                try {
+                    resultSet.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(preparedStatement!=null){
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(connection!=null){
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+```
+
+
 
 
 
