@@ -11326,14 +11326,10 @@ Redis还支持事务、持久化、Lua脚本、多种集群方案等。
 Redis的数据结构可以结合Java中的对应的类来进行理解，其中：
 
 - **String数据结构对应Object类 （任意对象都会序列化成string来存储）**，--SDS
-
 - **List数据结构对应java.util.List接口的实现类java.util.LinkedList**，--双向链表
-
 - **Set数据结构对应java.util.Set接口**，--字典
-
-- **zSet数据结构对应java.util.SortedSet接口，**--跳表
-
 - **Hash数据结构对应java.util.HashMap类。**--字典
+- **zSet数据结构对应java.util.SortedSet接口，**--跳表
 
 
 
@@ -11342,6 +11338,7 @@ Redis的数据结构可以结合Java中的对应的类来进行理解，其中�
 ```
 1、介绍：
 		String类型是Redis中最为基础的数据存储类型，是二进制安全的字符串，该类型可以接受任何格式的数据。string 数据结构是简单的 key-value 类型。虽然 Redis 是⽤ C 语⾔写的，但是 Redis并没有使⽤ C 的字符串表示，⽽是⾃⼰构建了一种 简单动态字符串（simple dynamic string， SDS）。相⽐于 C 的原⽣字符串， Redis 的 SDS 不光可以保存⽂本数据还可以保存二进制数据，并且获取字符串⻓度复杂度为 O(1)（C 字符串为 O(N)） ,除此之外,Redis的SDS API 是安全的，不会造成缓冲区溢出。
+	512M
 		
 2、常⽤命令: 
 		set,get,strlen,exists,dect,incr,setex 等等。
